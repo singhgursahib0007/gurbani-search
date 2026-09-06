@@ -45,8 +45,8 @@ export function savedView({ onOpen }) {
     if (!items.length) {
       inner.append(emptyState(
         "bookmark", "Nothing saved yet",
-        "Tap the bookmark while reading to keep a shabad, " +
-        "or press and hold a line to keep just that line."));
+        "Swipe a line left while reading to keep it, " +
+        "or tap the bookmark to keep the whole shabad."));
       scroll.append(inner);
       return;
     }

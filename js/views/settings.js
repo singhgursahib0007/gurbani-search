@@ -61,6 +61,31 @@ export function settingsView() {
         { sub: "Words joined, as in the original", iconName: "alignLeft" }),
     ]));
 
+    inner.append(el("div.section-label", { text: "Gestures" }));
+    inner.append(el("div.list", {}, [
+      el("div.row", {}, [
+        el("div.row-icon.is-gold", { html: Icons.handSwipeLeft || Icons.starFill }),
+        el("div.row-body", {}, [
+          el("div.row-title", { text: "Swipe a line left to save it" }),
+          el("div.row-sub", { text: "Kept lines appear under Saved" }),
+        ]),
+      ]),
+      el("div.row", {}, [
+        el("div.row-icon", { html: Icons.bookmarkFill }),
+        el("div.row-body", {}, [
+          el("div.row-title", { text: "Tap the bookmark to save a whole shabad" }),
+          el("div.row-sub", { text: "It is kept against the line you opened it at" }),
+        ]),
+      ]),
+      el("div.row", {}, [
+        el("div.row-icon", { html: Icons.eye }),
+        el("div.row-body", {}, [
+          el("div.row-title", { text: "Tap the page to hide the controls" }),
+          el("div.row-sub", { text: "Tap again to bring them back" }),
+        ]),
+      ]),
+    ]));
+
     inner.append(el("div.section-label", { text: "Reset" }));
     inner.append(el("div.list", {}, [
       el("button.row", {

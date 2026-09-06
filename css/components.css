@@ -355,3 +355,42 @@
 }
 .saved-line .drop svg { width: 16px; height: 16px; }
 .saved-line .drop:active { background: var(--fill); }
+
+/* --------------------------------------------------- sheet: quote ------ */
+.sheet-quote {
+  margin: 0 var(--s-4) var(--s-5);
+  padding: var(--s-4) var(--s-4) var(--s-4) var(--s-5);
+  background: var(--bg-elevated);
+  border-radius: var(--r-lg);
+  box-shadow: inset 3px 0 0 var(--gold), var(--shadow-1);
+}
+.sheet-quote .gur { font-size: 1.3rem; }
+.sheet-quote .tl {
+  font-size: var(--t-footnote); color: var(--label-2);
+  font-style: italic; margin-top: var(--s-2);
+}
+.sheet-quote .en {
+  font-size: var(--t-subhead); color: var(--label-2); margin-top: var(--s-1);
+}
+
+/* --------------------------------------------------- sheet: buttons ---- */
+.sheet-actions {
+  display: flex; flex-direction: column; gap: var(--s-2);
+  padding: 0 var(--s-4);
+}
+.btn-primary, .btn-secondary {
+  display: flex; align-items: center; justify-content: center; gap: var(--s-2);
+  min-height: 52px;
+  border-radius: var(--r-md);
+  font-size: var(--t-body); font-weight: 600;
+  transition: transform var(--dur-fast) var(--ease),
+              filter var(--dur-fast) var(--ease);
+}
+.btn-primary svg, .btn-secondary svg { width: 20px; height: 20px; }
+.btn-primary {
+  background: var(--gold); color: #1a1204;
+  box-shadow: var(--shadow-1);
+}
+.btn-primary:active { transform: scale(0.98); filter: brightness(0.95); }
+.btn-secondary { background: var(--fill); color: var(--label); }
+.btn-secondary:active { background: var(--fill-strong); transform: scale(0.98); }
