@@ -82,9 +82,35 @@ export function settingsView() {
       ]),
     ]));
 
+    inner.append(el("div.section-label", { text: "About" }));
+    inner.append(el("div.list", {}, [
+      el("div.row", {}, [
+        el("div.row-icon.is-gold", { html: Icons.heart }),
+        el("div.row-body", {}, [
+          el("div.row-title", { text: "Made by Gursahib Singh" }),
+          el("div.row-sub", { text: "Gurbani, for reading anywhere" }),
+        ]),
+      ]),
+      el("a.row", {
+        href: "mailto:gursahib99888@gmail.com?subject=" +
+              encodeURIComponent("Gurbani app"),
+        style: { color: "inherit", textDecoration: "none" },
+      }, [
+        el("div.row-icon", { html: Icons.envelope }),
+        el("div.row-body", {}, [
+          el("div.row-title", { text: "Contact" }),
+          el("div.row-sub", { text: "gursahib99888@gmail.com" }),
+        ]),
+        el("div.row-trail", { html: Icons.chevronRight }),
+      ]),
+    ]));
+
     inner.append(el("p.t-footnote.dim2", {
-      style: { padding: "var(--s-2) var(--s-5) var(--s-8)", textAlign: "center" },
-      text: "Your preferences stay on this device.",
+      style: { padding: "var(--s-2) var(--s-5) var(--s-8)", textAlign: "center",
+               lineHeight: "1.6" },
+      html: "Your preferences stay on this device.<br>" +
+            "Gurbani text and translations by the Khalis Foundation " +
+            "and the translators named above.",
     }));
 
     scroll.append(inner);

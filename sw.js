@@ -21,7 +21,7 @@
  * and the old one is deleted on activate.
  */
 
-const BUILD = "20260906-011557";
+const BUILD = "20260906-012159";
 const CACHE = `gurbani-${BUILD}`;
 
 /* Paths are relative so this works both at the site root and under a
@@ -58,10 +58,17 @@ const BIG = /\/data\/(lines|text-en)\.tsv$/;
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE)
-      // addAll is all-or-nothing; one missing file would leave the app with
-      // no cache at all, so each is added on its own and failures are noted
-      // rather than fatal.
-      .then((c) => Promise.all(SHELL.map((u) => c.add(u).catch(() => null))))
+      // Two things matter here. addAll is all-or-nothing, so one missing file
+      // would leave the app with no cache at all - each entry is added on its
+      // own instead. And each is fetched with cache: "reload", to go past the
+      // browser's HTTP cache: without it a stale copy sitting in the CDN edge
+      // or the browser can be baked into the precache and served for the whole
+      // life of this build.
+      .then((c) => Promise.all(SHELL.map((u) =>
+        fetch(new Request(u, { cache: "reload" }))
+          .then((res) => (res.ok ? c.put(u, res) : null))
+          .catch(() => null),
+      )))
       .then(() => self.skipWaiting()),
   );
 });
