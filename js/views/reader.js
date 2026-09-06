@@ -550,9 +550,10 @@ const isHeading = (text = "") =>
 /* The catalogue's English field is a transliteration; the curated table has
  * the name as it is actually written. Note the bani record calls its id
  * `baniID`, not `bani_id`. */
-const baniEnglish = (info) =>
-  (BANI_INFO[info.baniID] && BANI_INFO[info.baniID].name) ||
-  info.english || "Bani";
+const baniEnglish = (info) => {
+  const id = info.bani_id ?? info.baniID;
+  return (BANI_INFO[id] && BANI_INFO[id].name) || info.english || "Bani";
+};
 
 function normaliseBani(d) {
   const info = d.bani || {};
