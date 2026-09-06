@@ -1,0 +1,135 @@
+/* ===========================================================================
+   The reader.
+
+   Everything here serves one goal: the words, undisturbed. Chrome fades out
+   as you scroll and comes back on a tap. Every knob a reader might reach for
+   lives in one sheet, a thumb's reach from the bottom edge.
+   =========================================================================== */
+
+.reader { position: relative; height: 100dvh; display: flex; flex-direction: column; }
+
+.reader-scroll {
+  flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+.reader-scroll.no-smooth { scroll-behavior: auto; }
+
+.reader-inner {
+  max-width: var(--reader-measure);
+  margin: 0 auto;
+  padding: var(--s-4) var(--s-5) 45dvh;
+}
+
+/* --- the chrome, which gets out of the way ----------------------------- */
+.reader-bar {
+  position: fixed; left: 0; right: 0; z-index: 30;
+  padding-top: env(safe-area-inset-top);
+  background: var(--blur-bg);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: 0.5px solid var(--separator);
+  transition: transform var(--dur) var(--ease), opacity var(--dur) var(--ease);
+}
+.reader-bar.hidden { transform: translateY(-100%); opacity: 0; pointer-events: none; }
+
+.reader-title { flex: 1; min-width: 0; text-align: center; }
+.reader-title .t1 {
+  font-size: var(--t-subhead); font-weight: 600;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* Reading progress, hairline-thin along the very top. */
+.reader-progress {
+  position: absolute; left: 0; bottom: -1px; height: 2px;
+  background: var(--gold); width: 0;
+  transition: width 120ms linear;
+}
+
+/* --- a line of Gurbani -------------------------------------------------- */
+.line {
+  padding: var(--s-4) 0;
+  border-bottom: 0.5px solid transparent;
+  text-align: var(--reader-align);
+  transition: background var(--dur-fast) var(--ease);
+  border-radius: var(--r-md);
+  scroll-margin-top: 96px;
+}
+.line + .line { border-top: 0.5px solid var(--separator); }
+.line.is-active { background: var(--gold-quiet); }
+
+.line .gur {
+  font-size: calc(1.5rem * var(--reader-scale));
+  /* Inherit the reader's weight preference rather than pinning it here, or
+     choosing "Bold" in the sheet would have no visible effect. */
+  font-weight: var(--gur-weight, 400);
+}
+.line .tl {
+  font-size: calc(0.95rem * var(--translit-scale, 1));
+  color: var(--label-2); font-style: italic;
+  margin-top: var(--s-2);
+}
+.line .tr {
+  font-size: calc(1rem * var(--translation-scale, 1));
+  color: var(--label-2);
+  margin-top: var(--s-2);
+}
+.line .tr.pa {
+  font-family: var(--gur-font, "Sant Lipi"), "Gurmukhi MN",
+               "Gurmukhi Sangam MN", "Noto Sans Gurmukhi", sans-serif;
+  line-height: 1.75;
+}
+.line .who {
+  font-size: var(--t-caption-2); color: var(--label-3);
+  text-transform: uppercase; letter-spacing: 0.05em;
+  margin-top: var(--s-1);
+}
+
+/* A heading line inside a bani: a raag title, a "Jap" marker, or the Mool
+   Mantar itself. Centred and set apart, but never made smaller - some of
+   these are the most important lines on the page. */
+.line.is-header { text-align: center; }
+.line.is-header + .line { border-top-color: transparent; }
+
+/* --- the floating controls --------------------------------------------- */
+.reader-fabs {
+  position: fixed; right: var(--s-4);
+  bottom: calc(var(--s-5) + env(safe-area-inset-bottom));
+  z-index: 35;
+  display: flex; flex-direction: column; gap: var(--s-3);
+  transition: transform var(--dur) var(--ease), opacity var(--dur) var(--ease);
+}
+.reader-fabs.hidden { transform: translateY(140%); opacity: 0; pointer-events: none; }
+
+.fab {
+  width: 52px; height: 52px; border-radius: var(--r-full);
+  display: grid; place-items: center;
+  background: var(--bg-elevated);
+  color: var(--accent);
+  box-shadow: var(--shadow-2);
+  border: 0.5px solid var(--separator);
+  transition: transform var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
+}
+.fab:active { transform: scale(0.9); }
+.fab svg { width: 23px; height: 23px; }
+.fab.is-on { background: var(--accent); color: #fff; border-color: transparent; }
+.fab.is-gold.is-on { background: var(--gold); }
+
+/* --- autoscroll speed pill --------------------------------------------- */
+.speed-pill {
+  position: fixed; left: 50%; transform: translateX(-50%);
+  bottom: calc(var(--s-6) + env(safe-area-inset-bottom));
+  z-index: 36;
+  display: flex; align-items: center; gap: var(--s-3);
+  padding: var(--s-2) var(--s-4);
+  background: var(--blur-bg);
+  -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px);
+  border: 0.5px solid var(--separator);
+  border-radius: var(--r-full);
+  box-shadow: var(--shadow-2);
+  font-size: var(--t-subhead); font-weight: 600;
+}
+.speed-pill input { width: 8rem; }
+
+@media (min-width: 43rem) {
+  .reader-inner { padding-left: var(--s-8); padding-right: var(--s-8); }
+}

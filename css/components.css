@@ -1,0 +1,285 @@
+/* ===========================================================================
+   Components — the iOS vocabulary: navigation bar, tab bar, inset grouped
+   lists, sheets with a grabber, segmented controls, switches.
+   =========================================================================== */
+
+/* --------------------------------------------------- navigation bar ----- */
+.navbar {
+  position: sticky; top: 0; z-index: 30;
+  padding-top: env(safe-area-inset-top);
+  background: var(--blur-bg);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+  transition: box-shadow var(--dur-fast) var(--ease),
+              border-color var(--dur-fast) var(--ease);
+  border-bottom: 0.5px solid transparent;
+}
+.navbar.scrolled { border-bottom-color: var(--separator); }
+
+.navbar-row {
+  display: flex; align-items: center; gap: var(--s-2);
+  min-height: var(--tap);
+  padding: var(--s-1) var(--s-2);
+}
+.navbar-title {
+  flex: 1; text-align: center;
+  font-size: var(--t-headline); font-weight: 600;
+  opacity: 0; transform: translateY(6px);
+  transition: opacity var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.navbar.scrolled .navbar-title { opacity: 1; transform: none; }
+
+/* The large title that shrinks away as you scroll, as on iOS. */
+.large-title {
+  padding: var(--s-1) var(--s-5) var(--s-3);
+  transition: opacity var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
+  transform-origin: left center;
+}
+.navbar.scrolled .large-title {
+  opacity: 0; transform: translateY(-6px) scale(0.94); pointer-events: none;
+  height: 0; padding-top: 0; padding-bottom: 0; overflow: hidden;
+}
+
+/* --------------------------------------------------- icon button -------- */
+.icon-btn {
+  width: var(--tap); height: var(--tap);
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: var(--r-full);
+  color: var(--accent);
+  transition: background var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
+}
+.icon-btn:active { background: var(--fill); transform: scale(0.92); }
+.icon-btn.plain { color: var(--label-2); }
+.icon-btn svg { width: 22px; height: 22px; }
+
+/* --------------------------------------------------- tab bar ------------ */
+.tabbar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
+  display: flex;
+  padding-bottom: env(safe-area-inset-bottom);
+  background: var(--blur-bg);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+  border-top: 0.5px solid var(--separator);
+  transition: transform var(--dur) var(--ease);
+}
+.tabbar.hidden { transform: translateY(110%); }
+
+.tab {
+  flex: 1;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 3px;
+  padding: 7px 0 5px;
+  color: var(--label-3);
+  transition: color var(--dur-fast) var(--ease);
+}
+.tab svg { width: 25px; height: 25px; }
+.tab span { font-size: 10px; font-weight: 500; letter-spacing: 0; }
+.tab[aria-selected="true"] { color: var(--accent); }
+.tab:active svg { transform: scale(0.88); transition: transform 100ms var(--ease); }
+
+/* --------------------------------------------------- inset list --------- */
+.list {
+  background: var(--bg-elevated);
+  border-radius: var(--r-lg);
+  margin: 0 var(--s-4) var(--s-5);
+  overflow: hidden;
+  box-shadow: var(--shadow-1);
+}
+.row {
+  display: flex; align-items: center; gap: var(--s-3);
+  min-height: var(--tap);
+  padding: var(--s-3) var(--s-4);
+  width: 100%; text-align: left;
+  position: relative;
+  transition: background var(--dur-fast) var(--ease);
+}
+.row + .row::before {
+  content: ""; position: absolute; left: var(--s-4); right: 0; top: 0;
+  height: 0.5px; background: var(--separator);
+}
+.row:active { background: var(--fill); }
+.row-body { flex: 1; min-width: 0; }
+.row-title { font-size: var(--t-body); font-weight: 500; }
+.row-sub { font-size: var(--t-footnote); color: var(--label-2); margin-top: 1px; }
+.row-trail { display: flex; align-items: center; gap: var(--s-2); color: var(--label-3); }
+.row-trail svg { width: 18px; height: 18px; }
+
+/* The leading glyph on a list row: a soft tinted square, as in iOS Settings. */
+.row-icon {
+  width: 30px; height: 30px; flex: none;
+  display: grid; place-items: center;
+  border-radius: var(--r-sm);
+  background: var(--accent-quiet); color: var(--accent);
+}
+.row-icon svg { width: 17px; height: 17px; }
+.row-icon.is-gold { background: var(--gold-quiet); color: var(--gold); }
+
+/* --------------------------------------------------- bani card --------- */
+.card-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr);
+  gap: var(--s-3); padding: 0 var(--s-4) var(--s-5);
+}
+.bani-card {
+  position: relative; text-align: left;
+  background: var(--bg-elevated);
+  border-radius: var(--r-lg);
+  padding: var(--s-4);
+  min-height: 108px;
+  display: flex; flex-direction: column; justify-content: space-between;
+  box-shadow: var(--shadow-1);
+  overflow: hidden;
+  transition: transform var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
+}
+.bani-card:active { transform: scale(0.97); }
+.bani-card::after {
+  content: ""; position: absolute; inset: 0;
+  border-radius: inherit;
+  border: 0.5px solid var(--separator);
+  pointer-events: none;
+}
+.bani-card .gur { font-size: 1.3rem; line-height: 1.6; }
+.bani-card .en { font-size: var(--t-footnote); color: var(--label-2); margin-top: var(--s-2); }
+.bani-card .star {
+  position: absolute; top: 6px; right: 6px;
+  width: 34px; height: 34px; display: grid; place-items: center;
+  border-radius: var(--r-full); color: var(--label-3);
+}
+.bani-card .star svg { width: 17px; height: 17px; }
+.bani-card .star.on { color: var(--gold); }
+.bani-card .star:active { background: var(--fill); }
+
+/* --------------------------------------------------- sheet ------------- */
+.sheet-scrim {
+  position: fixed; inset: 0; z-index: 50;
+  background: rgba(0, 0, 0, 0.35);
+  opacity: 0; transition: opacity var(--dur) var(--ease);
+  -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px);
+}
+.sheet-scrim.open { opacity: 1; }
+
+.sheet {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 51;
+  background: var(--bg-grouped);
+  border-radius: var(--r-2xl) var(--r-2xl) 0 0;
+  box-shadow: var(--shadow-2);
+  transform: translateY(101%);
+  transition: transform var(--dur) var(--ease);
+  max-height: 88dvh;
+  display: flex; flex-direction: column;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.sheet.open { transform: none; }
+.sheet-grabber {
+  width: 36px; height: 5px; border-radius: var(--r-full);
+  background: var(--fill-strong);
+  margin: var(--s-2) auto var(--s-1);
+  flex: none;
+}
+.sheet-head {
+  display: flex; align-items: center; gap: var(--s-2);
+  padding: var(--s-2) var(--s-3) var(--s-3);
+  flex: none;
+}
+.sheet-head h2 { flex: 1; font-size: var(--t-title-3); }
+.sheet-body { overflow-y: auto; padding-bottom: var(--s-6); }
+
+@media (min-width: 43rem) {
+  .sheet { left: 50%; right: auto; width: 30rem; transform: translate(-50%, 101%);
+           border-radius: var(--r-2xl); bottom: var(--s-5); max-height: 80dvh; }
+  .sheet.open { transform: translate(-50%, 0); }
+}
+
+/* --------------------------------------------------- controls ---------- */
+.segmented {
+  display: flex; gap: 2px; padding: 2px;
+  background: var(--bg-sunken);
+  border-radius: var(--r-md);
+}
+.segmented button {
+  flex: 1; padding: 7px 10px;
+  border-radius: calc(var(--r-md) - 3px);
+  font-size: var(--t-subhead); font-weight: 500;
+  color: var(--label-2);
+  transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+  white-space: nowrap;
+}
+/* An icon inside a segment must be sized, or the raw SVG fills the button. */
+.segmented button svg { width: 19px; height: 19px; display: block; margin: 0 auto; }
+
+.segmented button[aria-pressed="true"] {
+  background: var(--bg-elevated); color: var(--label);
+  font-weight: 600; box-shadow: var(--shadow-1);
+}
+
+.switch {
+  width: 51px; height: 31px; flex: none;
+  border-radius: var(--r-full);
+  background: var(--fill-strong);
+  position: relative;
+  transition: background var(--dur-fast) var(--ease);
+}
+.switch::after {
+  content: ""; position: absolute; top: 2px; left: 2px;
+  width: 27px; height: 27px; border-radius: var(--r-full);
+  background: #fff; box-shadow: 0 2px 6px rgba(0,0,0,.2);
+  transition: transform var(--dur-fast) var(--ease);
+}
+.switch[aria-checked="true"] { background: var(--accent); }
+.switch[aria-checked="true"]::after { transform: translateX(20px); }
+
+.slider {
+  -webkit-appearance: none; appearance: none;
+  width: 100%; height: 4px; border-radius: var(--r-full);
+  background: var(--fill-strong);
+  outline: none;
+}
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 26px; height: 26px; border-radius: var(--r-full);
+  background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,.22), 0 0 0 0.5px rgba(0,0,0,.04);
+  cursor: grab;
+}
+.slider::-moz-range-thumb {
+  width: 26px; height: 26px; border: 0; border-radius: var(--r-full);
+  background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,.22);
+}
+
+/* Theme swatches in the reading options sheet. */
+.swatches { display: flex; gap: var(--s-3); padding: var(--s-1) 0; }
+.swatch {
+  flex: 1; aspect-ratio: 1;
+  border-radius: var(--r-md);
+  display: grid; place-items: center;
+  font-size: var(--t-caption); font-weight: 600;
+  border: 2px solid transparent;
+  position: relative;
+  transition: transform var(--dur-fast) var(--ease);
+}
+.swatch:active { transform: scale(0.94); }
+.swatch[aria-pressed="true"] { border-color: var(--accent); }
+.swatch[aria-pressed="true"]::after {
+  content: ""; position: absolute; inset: -5px;
+  border-radius: var(--r-lg); border: 1.5px solid var(--accent); opacity: .35;
+}
+
+/* --------------------------------------------------- empty state ------- */
+.empty {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: var(--s-3); padding: var(--s-12) var(--s-6);
+  text-align: center; color: var(--label-3);
+}
+.empty svg { width: 44px; height: 44px; opacity: .5; }
+.empty h3 { font-size: var(--t-headline); color: var(--label-2); }
+.empty p { font-size: var(--t-subhead); max-width: 22rem; }
+
+/* --------------------------------------------------- progress ---------- */
+.progress-track {
+  height: 4px; border-radius: var(--r-full);
+  background: var(--fill-strong); overflow: hidden; width: 12rem;
+}
+.progress-fill {
+  height: 100%; background: var(--accent); border-radius: inherit;
+  transition: width 140ms linear;
+}

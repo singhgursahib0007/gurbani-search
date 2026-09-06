@@ -1,0 +1,138 @@
+/* ===========================================================================
+   Search: a Gurmukhi keyboard pinned to the bottom, results scrolling above.
+
+   The keyboard is the input, so it never moves and never scrolls away. Keys
+   are at least 44px tall - Apple's minimum touch target - and the grid is
+   sized so ten columns still fit on a small phone.
+   =========================================================================== */
+
+.search-screen {
+  display: flex; flex-direction: column;
+  height: 100dvh;
+  /* The keyboard sits directly above the tab bar rather than under it. */
+  padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom));
+}
+
+/* --- what you have typed ---------------------------------------------- */
+.query-bar {
+  flex: none;
+  display: flex; align-items: center; gap: var(--s-3);
+  padding: var(--s-3) var(--s-4);
+  min-height: 62px;
+  background: var(--bg-elevated);
+  border-bottom: 0.5px solid var(--separator);
+}
+.query-text {
+  flex: 1; min-width: 0;
+  font-size: 1.65rem; line-height: 1.5;
+  white-space: nowrap; overflow-x: auto; overflow-y: hidden;
+  direction: ltr;
+}
+.query-text:empty::before {
+  content: attr(data-placeholder);
+  color: var(--label-3);
+  font-size: var(--t-body);
+  font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+}
+.query-hint {
+  display: flex; align-items: center; gap: var(--s-3);
+  padding: 0 var(--s-4) var(--s-2);
+  background: var(--bg-elevated);
+  border-bottom: 0.5px solid var(--separator);
+}
+.query-hint .txt {
+  flex: 1; min-width: 0;
+  font-size: var(--t-caption); color: var(--label-3);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.query-hint .segmented { flex: none; }
+.query-hint .segmented button { padding: 4px 10px; font-size: var(--t-caption); }
+
+/* --- results ----------------------------------------------------------- */
+.results {
+  /* min-height:0 is load-bearing: without it a flex child refuses to shrink
+     below its content, and the keyboard gets pushed off the bottom. */
+  flex: 1 1 0; min-height: 0;
+  overflow-y: auto; -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  background: var(--bg-grouped);
+  padding: var(--s-3) 0 var(--s-4);
+}
+.result {
+  display: block; width: 100%; text-align: left;
+  background: var(--bg-elevated);
+  margin: 0 var(--s-4) var(--s-2);
+  padding: var(--s-4);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-1);
+  position: relative;
+  transition: transform var(--dur-fast) var(--ease);
+  width: calc(100% - var(--s-8));
+}
+.result:active { transform: scale(0.985); }
+.result .gur { font-size: 1.35rem; }
+.result .tl {
+  font-size: var(--t-footnote); color: var(--label-2);
+  font-style: italic; margin-top: var(--s-1);
+}
+.result .en { font-size: var(--t-subhead); color: var(--label-2); margin-top: var(--s-1); }
+.result .where {
+  font-size: var(--t-caption); color: var(--label-3);
+  margin-top: var(--s-2); display: flex; gap: var(--s-2); align-items: center;
+}
+/* the matched run of letters, highlighted in gold */
+.result mark {
+  background: var(--gold-quiet); color: var(--gold);
+  border-radius: 4px; padding: 0 2px;
+}
+
+/* --- the keyboard ------------------------------------------------------ */
+.keyboard {
+  flex: none;
+  background: var(--bg-sunken);
+  border-top: 0.5px solid var(--separator);
+  padding: var(--s-2) var(--s-1);
+  user-select: none; -webkit-user-select: none;
+}
+.kb-grid {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 5px;
+  padding: 0 5px;
+}
+.key {
+  min-height: var(--tap);
+  border-radius: var(--r-sm);
+  background: var(--bg-elevated);
+  color: var(--gurbani);
+  font-family: var(--gur-font, "Sant Lipi"), "Gurmukhi MN",
+               "Gurmukhi Sangam MN", "Noto Sans Gurmukhi", sans-serif;
+  font-size: 1.3rem; line-height: 1;
+  font-weight: 500;   /* fixed: the reading weight preference is not for keys */
+  display: grid; place-items: center;
+  box-shadow: 0 1px 0 rgba(0,0,0,.14);
+  transition: transform 90ms var(--ease), background 90ms var(--ease);
+}
+.key:active { background: var(--fill-strong); transform: scale(0.94); }
+/* Utility keys live on their own row so the alphabet grid stays a clean
+   10-column block: the letters are the keyboard, these are its edges. */
+.kb-utils {
+  display: flex; gap: 5px;
+  padding: 5px 5px 0;
+}
+.kb-utils .key { flex: 1; }
+.kb-utils .key.grow { flex: 2; }
+.key.util {
+  background: var(--fill); color: var(--label-2);
+  font-size: var(--t-subhead);
+  font-family: inherit;
+}
+.key.util svg { width: 20px; height: 20px; }
+.key[disabled] { opacity: .35; }
+
+/* On a wide screen the keyboard is centred rather than stretched. */
+@media (min-width: 43rem) {
+  .keyboard { padding-bottom: var(--s-3); }
+  .kb-grid { max-width: 34rem; margin: 0 auto; }
+  .result { max-width: 44rem; margin-left: auto; margin-right: auto; }
+}
