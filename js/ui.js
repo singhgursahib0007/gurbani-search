@@ -63,10 +63,14 @@ export function sheet(title, build, { onClose } = {}) {
   build(body, { close: () => close() });
 
   document.body.append(scrim, panel);
-  requestAnimationFrame(() => {
+  const present = () => {
     scrim.classList.add("open");
     panel.classList.add("open");
-  });
+  };
+  // rAF for the smooth case, a timer as backstop: rAF never fires in a
+  // background tab, which would leave the sheet parked off-screen.
+  requestAnimationFrame(present);
+  setTimeout(present, 40);
 
   let closed = false;
   function close() {
@@ -170,6 +174,90 @@ export const listGroup = (rows, label) =>
     label && el("div.section-label", { text: label }),
     el("div.list", {}, rows.filter(Boolean)),
   ]);
+
+/* ------------------------------------------------------------- toast --- */
+let toastEl = null, toastTimer = null;
+
+/** A brief confirmation, with an optional undo. Replaces any toast on screen. */
+export function toast(message, { action, onAction, ms = 2800 } = {}) {
+  clearTimeout(toastTimer);
+  toastEl?.remove();
+
+  toastEl = el("div.toast", { role: "status" }, [
+    el("span", { text: message }),
+    action && el("button.toast-action", {
+      text: action,
+      onclick: () => { onAction?.(); hideToast(); },
+    }),
+  ].filter(Boolean));
+
+  document.body.append(toastEl);
+  requestAnimationFrame(() => toastEl?.classList.add("in"));
+  // rAF does not fire in a background tab; make sure it still shows.
+  setTimeout(() => toastEl?.classList.add("in"), 40);
+  toastTimer = setTimeout(hideToast, ms);
+}
+
+function hideToast() {
+  const t = toastEl;
+  if (!t) return;
+  toastEl = null;
+  t.classList.remove("in");
+  setTimeout(() => t.remove(), 300);
+}
+
+/* --------------------------------------------------------- long press --- */
+/**
+ * Fire `handler` when a press is held still on `node`.
+ *
+ * Cancelled by movement, so it never steals a scroll, and it suppresses the
+ * click that would otherwise follow - in the reader that click toggles the
+ * chrome, which would flash every time someone saved a line.
+ */
+export function onLongPress(node, handler, { ms = 500, slop = 12 } = {}) {
+  let timer = null, sx = 0, sy = 0, fired = false;
+
+  const cancel = () => { clearTimeout(timer); timer = null; };
+
+  const start = (x, y) => {
+    fired = false;
+    sx = x; sy = y;
+    cancel();
+    timer = setTimeout(() => {
+      fired = true;
+      tap(18);
+      handler();
+    }, ms);
+  };
+
+  const move = (x, y) => {
+    if (timer && (Math.abs(x - sx) > slop || Math.abs(y - sy) > slop)) cancel();
+  };
+
+  node.addEventListener("touchstart", (e) => {
+    const t = e.touches[0];
+    start(t.clientX, t.clientY);
+  }, { passive: true });
+  node.addEventListener("touchmove", (e) => {
+    const t = e.touches[0];
+    move(t.clientX, t.clientY);
+  }, { passive: true });
+  node.addEventListener("touchend", cancel);
+  node.addEventListener("touchcancel", cancel);
+
+  // Pointer events cover desktop; touch devices fire both, and the guard on
+  // `fired` keeps that from running the handler twice.
+  node.addEventListener("mousedown", (e) => start(e.clientX, e.clientY));
+  node.addEventListener("mousemove", (e) => move(e.clientX, e.clientY));
+  node.addEventListener("mouseup", cancel);
+  node.addEventListener("mouseleave", cancel);
+
+  node.addEventListener("click", (e) => {
+    if (fired) { e.stopPropagation(); e.preventDefault(); fired = false; }
+  }, true);
+
+  node.addEventListener("contextmenu", (e) => e.preventDefault());
+}
 
 export function emptyState(iconName, title, body) {
   return el("div.empty", {}, [

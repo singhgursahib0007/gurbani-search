@@ -155,3 +155,23 @@
 @media (min-width: 43rem) {
   .reader-inner { padding-left: var(--s-8); padding-right: var(--s-8); }
 }
+
+/* A line the reader has kept. Marked quietly - a small gold bookmark at the
+   trailing edge - so it is recognisable on the page without competing with
+   the words. */
+.line.is-saved { position: relative; }
+.line.is-saved::after {
+  content: "";
+  position: absolute; top: 10px; inset-inline-end: -2px;
+  width: 12px; height: 16px;
+  background: var(--gold);
+  opacity: .85;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 72%, 0 100%);
+}
+
+/* The flash when a line is saved, so the gesture is felt as well as heard. */
+@keyframes line-kept {
+  0%   { background: var(--gold-quiet); }
+  100% { background: transparent; }
+}
+.line.just-kept { animation: line-kept 900ms var(--ease); }

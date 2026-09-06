@@ -9,7 +9,8 @@
  * re-renders the lines underneath while the sheet is still open.
  */
 
-import { el, clear, iconButton, sheet, segmented, sliderRow, switchRow, tap } from "../ui.js";
+import { el, clear, iconButton, sheet, segmented, sliderRow, switchRow, tap,
+         toast, onLongPress } from "../ui.js";
 import { Icons } from "../icons.js";
 import { store, DEFAULTS } from "../store.js";
 import { getBani, getShabad, toLarivaar } from "../data.js";
@@ -67,6 +68,14 @@ export function readerView({ type, id, focusVerse = null }, { onBack }) {
     title.firstChild.textContent = record.title;
     store.set("lastRead", { type, id, title: record.title, at: Date.now() });
     render();
+
+    // The press-and-hold gesture is invisible, so say it once and never again.
+    if (store.get("hintLongPress")) {
+      setTimeout(() => {
+        store.set("hintLongPress", false);
+        toast("Press and hold a line to save it");
+      }, 1600);
+    }
     // Bar height varies with the notch, so measure rather than assume.
     requestAnimationFrame(() => {
       scroller.style.paddingTop = bar.offsetHeight + "px";
@@ -102,6 +111,12 @@ export function readerView({ type, id, focusVerse = null }, { onBack }) {
       });
       if (focusVerse != null && line.verseId === focusVerse) {
         box.classList.add("is-focus");
+      }
+      // Only lines with a stable verse id can be kept: bani lines are numbered
+      // in their own id space and would not resolve back to a shabad.
+      if (line.verseId != null) {
+        if (store.isSaved(lineKey(line.verseId))) box.classList.add("is-saved");
+        onLongPress(box, () => openLineActions(line, box));
       }
       // append() would stringify a `false`, so every optional node is
       // filtered out before it reaches the DOM.
@@ -259,16 +274,98 @@ export function readerView({ type, id, focusVerse = null }, { onBack }) {
   function toggleSave() {
     if (!record) return;
     tap();
-    store.toggleSaved({
+    const first = record.lines.find((l) => !l.isHeader) || record.lines[0];
+    const nowSaved = store.toggleSaved({
       id: `${type}:${id}`, type, refId: id,
-      title: record.title, gurmukhi: record.lines[0]?.gurmukhi || "",
+      title: record.gurTitle || record.title,
+      subtitle: record.subtitle || null,
+      gurmukhi: first?.gurmukhi || "",
     });
     updateSaveIcon();
+    toast(nowSaved
+      ? (type === "bani" ? "Bani saved" : "Shabad saved")
+      : "Removed from Saved");
   }
   function updateSaveIcon() {
     const on = store.isSaved(`${type}:${id}`);
     saveBtn.innerHTML = on ? Icons.bookmarkFill : Icons.bookmark;
     saveBtn.style.color = on ? "var(--gold)" : "";
+  }
+
+  /* ----------------------------------------------------- line actions --- */
+  const lineKey = (verseId) => `line:${verseId}`;
+
+  function lineEntry(line) {
+    return {
+      id: lineKey(line.verseId),
+      type: "line",
+      refId: line.verseId,
+      shabadId: record?.shabadId ?? (type === "shabad" ? id : null),
+      gurmukhi: line.gurmukhi,
+      translit: line.translit || null,
+      en: line.en || null,
+      where: record?.subtitle || record?.title || "",
+    };
+  }
+
+  /* A press and hold opens this rather than saving outright: it makes the
+     gesture discoverable, shows what is about to be kept, and puts copying
+     within reach - which matters because holding a line no longer starts a
+     text selection. */
+  function openLineActions(line, box) {
+    const saved = store.isSaved(lineKey(line.verseId));
+    sheet(saved ? "Saved line" : "Save this line", (body, { close }) => {
+      body.append(el("div", {
+        style: { padding: "0 var(--s-5) var(--s-4)" },
+      }, [
+        el("div.gur", { text: line.gurmukhi, style: { fontSize: "1.3rem" } }),
+        line.translit && el("div.t-footnote.dim", {
+          text: line.translit,
+          style: { marginTop: "var(--s-2)", fontStyle: "italic" },
+        }),
+      ].filter(Boolean)));
+
+      body.append(el("div.list", {}, [
+        el("button.row", {
+          onclick: () => {
+            const nowSaved = store.toggleSaved(lineEntry(line));
+            box.classList.toggle("is-saved", nowSaved);
+            if (nowSaved) {
+              box.classList.add("just-kept");
+              setTimeout(() => box.classList.remove("just-kept"), 900);
+            }
+            close();
+            toast(nowSaved ? "Line saved" : "Line removed", {
+              action: "Undo",
+              onAction: () => {
+                const back = store.toggleSaved(lineEntry(line));
+                box.classList.toggle("is-saved", back);
+              },
+            });
+          },
+        }, [
+          el(`div.row-icon${saved ? "" : ".is-gold"}`, {
+            html: saved ? Icons.xmark : Icons.bookmarkFill,
+          }),
+          el("div.row-body", {}, [
+            el("div.row-title", {
+              text: saved ? "Remove from Saved" : "Save line",
+            }),
+          ]),
+        ]),
+        el("button.row", {
+          onclick: async () => {
+            const parts = [line.gurmukhi, line.translit, line.en].filter(Boolean);
+            try { await navigator.clipboard.writeText(parts.join("\n"));
+                  close(); toast("Copied"); }
+            catch { close(); toast("Could not copy"); }
+          },
+        }, [
+          el("div.row-icon", { html: Icons.textSize }),
+          el("div.row-body", {}, [el("div.row-title", { text: "Copy line" })]),
+        ]),
+      ]));
+    });
   }
 
   /* --------------------------------------------------------- options ---- */
@@ -384,6 +481,7 @@ function normaliseShabad(d) {
   // is the title. The raag was previously the navigation title, the heading
   // and half the subtitle - the same words three times over.
   return {
+    shabadId: s.shabad_id ?? null,
     title: s.page_no ? `Ang ${s.page_no}` : "Shabad",
     gurTitle: null,
     subtitle: [s.writer, s.raag].filter(Boolean).join(" · ") || null,

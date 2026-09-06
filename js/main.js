@@ -55,8 +55,18 @@ function tabView(id) {
     onOpenShabad: (shabad, verse) => go(`#/shabad/${shabad}/${verse}`),
   });
   if (id === "saved") views[id] = savedView({
-    onOpen: (item) => go(item.type === "bani" ? `#/bani/${item.refId}`
-                                              : `#/shabad/${item.refId}`),
+    onOpen: (item) => {
+      // A kept line opens its shabad focused on that line, so it lands in
+      // context rather than at the top.
+      if (item.type === "line") {
+        go(item.shabadId
+          ? `#/shabad/${item.shabadId}/${item.refId}`
+          : `#/shabad/${item.refId}`);
+      } else {
+        go(item.type === "bani" ? `#/bani/${item.refId}`
+                                : `#/shabad/${item.refId}`);
+      }
+    },
   });
   if (id === "settings") views[id] = settingsView();
   return views[id];
