@@ -15,7 +15,23 @@ import { Icons } from "../icons.js";
 import { KB_ROWS, A2U, LETTER_NAMES, toGurmukhi } from "../gurmukhi.js";
 import { loadIndex, indexReady, search as runSearch, getShabad } from "../data.js";
 
-const MIN_LETTERS = 3;      // results begin here, and update on every tap after
+const MIN_LETTERS = 3;      // results begin here, and update on every tap
+
+/* A worked example, because "first letter of each word" is easy to say and
+ * surprisingly easy to misread. Seeing one real line taken apart explains it
+ * faster than any wording. This line is ang 681; its letters are distinctive
+ * enough that the five shown here find it on their own. */
+const EXAMPLE = {
+  words: ["\u0a1c\u0a4b", "\u0a2e\u0a3e\u0a17\u0a39\u0a3f",
+          "\u0a20\u0a3e\u0a15\u0a41\u0a30",
+          "\u0a05\u0a2a\u0a41\u0a28\u0a47", "\u0a24\u0a47"],
+  letters: ["\u0a1c", "\u0a2e", "\u0a20", "\u0a05", "\u0a24"],
+};
+
+/* A base letter plus the marks that belong to it: vowel signs, nasalisation,
+ * nukta, addak, virama. */
+const FIRST_CLUSTER =
+  /^(.[\u0a01-\u0a03\u0a3c\u0a3e-\u0a4d\u0a51\u0a70\u0a71\u0a75]*)(.*)$/u;
 
 export function searchView({ onOpenShabad }) {
   const root = el("div.screen.search-screen");
@@ -82,9 +98,7 @@ export function searchView({ onOpenShabad }) {
     if (query.length === 0) {
       hintText.textContent = "";
       clear(results);
-      results.append(emptyState(
-        "search", "Find a shabad",
-        "Tap the first letter of each word you remember, in order."));
+      results.append(introduction());
       return;
     }
 
@@ -132,6 +146,38 @@ export function searchView({ onOpenShabad }) {
       el("div.progress-track", {}, [fill]),
     ]));
     await loadIndex((frac) => { fill.style.width = `${Math.round(frac * 100)}%`; });
+  }
+
+  /* The opening screen: what to do, and one line showing what it looks like. */
+  function introduction() {
+    const line = el("div.eg-line.gur");
+    EXAMPLE.words.forEach((word, i) => {
+      // Highlight the whole first cluster - the letter together with any
+      // matra sitting on it. Splitting after the bare consonant orphans the
+      // vowel sign, and the browser draws it on a dotted circle of its own.
+      const [, head, tail] = word.match(FIRST_CLUSTER) || [, word, ""];
+      line.append(el("b", { text: head }));
+      line.append(document.createTextNode(tail + " "));
+      if (i === EXAMPLE.words.length - 1) line.append(document.createTextNode("…"));
+    });
+
+    const keys = el("div.eg-keys");
+    EXAMPLE.letters.forEach((letter, i) => {
+      if (i) keys.append(el("span.eg-arrow", { text: "\u203a" }));
+      keys.append(el("span.eg-key.gur", { text: letter }));
+    });
+
+    return el("div.intro", {}, [
+      el("div.intro-icon", { html: Icons.search }),
+      el("h3", { text: "Find a shabad" }),
+      el("p", { text: "Type the first letter of each word of the shabad." }),
+      el("div.eg", {}, [
+        el("div.eg-label", { text: "For example" }),
+        line,
+        el("div.eg-hint", { text: "tap these" }),
+        keys,
+      ]),
+    ]);
   }
 
   /* A result card carries the line and how it sounds, and nothing else.

@@ -63,7 +63,10 @@ function tabView(id) {
       // A kept line opens its shabad focused on that line, so it lands in
       // context rather than at the top.
       if (item.type === "line") {
-        go(item.shabadId
+        // A line kept from a bani reopens that bani at its position; one kept
+        // from a shabad reopens the shabad at its verse.
+        if (item.baniId != null) go(`#/bani/${item.baniId}/${item.seq}`);
+        else go(item.shabadId
           ? `#/shabad/${item.shabadId}/${item.refId}`
           : `#/shabad/${item.refId}`);
       } else if (item.type === "bani") {
@@ -110,10 +113,13 @@ function route() {
   if (!inReader && reader) { reader.destroy?.(); reader = null; }
 
   let m;
-  if ((m = h.match(/^#\/bani\/(\d+)/))) {
+  if ((m = h.match(/^#\/bani\/(\d+)(?:\/(\d+))?/))) {
     tabbar.classList.add("hidden");
     reader?.destroy?.();
-    reader = readerView({ type: "bani", id: +m[1] }, { onBack: back });
+    reader = readerView(
+      { type: "bani", id: +m[1], focusLine: m[2] ? +m[2] : null },
+      { onBack: back },
+    );
     mount(reader.root);
     return;
   }
@@ -121,7 +127,7 @@ function route() {
     tabbar.classList.add("hidden");
     reader?.destroy?.();
     reader = readerView(
-      { type: "shabad", id: +m[1], focusVerse: m[2] ? +m[2] : null },
+      { type: "shabad", id: +m[1], focusLine: m[2] ? +m[2] : null },
       { onBack: back },
     );
     mount(reader.root);
