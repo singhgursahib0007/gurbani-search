@@ -10,7 +10,7 @@
  * network round trip.
  */
 
-import { el, clear, iconButton, tap, emptyState, segmented } from "../ui.js";
+import { el, clear, iconButton, tap, emptyState } from "../ui.js";
 import { Icons } from "../icons.js";
 import { KB_ROWS, A2U, LETTER_NAMES, toGurmukhi } from "../gurmukhi.js";
 import { loadIndex, indexReady, search as runSearch, getShabad } from "../data.js";
@@ -21,7 +21,11 @@ export function searchView({ onOpenShabad }) {
   const root = el("div.screen.search-screen");
 
   let query = "";
-  let mode = "start";
+  // Always "anywhere". Someone searching by first letters rarely knows
+  // whether the phrase they remember is the start of the line, and offering
+  // the choice only made them get it wrong. Matching anywhere is a superset,
+  // so nothing is lost by not asking.
+  const mode = "anywhere";
 
   /* ------------------------------------------------------------ query --- */
   const queryText = el("div.query-text.gur", {
@@ -33,13 +37,7 @@ export function searchView({ onOpenShabad }) {
 
   const queryBar = el("div.query-bar", {}, [queryText, clearBtn]);
   const hintText = el("span.txt");
-  const modeToggle = segmented(
-    [{ value: "start", label: "From start" }, { value: "anywhere", label: "Anywhere" }],
-    mode,
-    (v) => { mode = v; run(); },
-    { label: "Where the letters may appear" },
-  );
-  const hint = el("div.query-hint", {}, [hintText, modeToggle]);
+  const hint = el("div.query-hint", {}, [hintText]);
 
   /* ---------------------------------------------------------- results --- */
   const results = el("div.results");
@@ -115,7 +113,7 @@ export function searchView({ onOpenShabad }) {
     clear(results);
     if (!total) {
       results.append(emptyState("search", "Nothing found",
-        "Check the order of the letters, or try matching anywhere in the line."));
+        "Try fewer letters, or check their order."));
       return;
     }
     rows.forEach((row) => results.append(card(row)));
