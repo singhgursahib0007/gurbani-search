@@ -1,6 +1,11 @@
-# How the harness works
+# The harness
 
-A short tour, for anyone extending it.
+The ingestion pipeline: how the corpus is fetched, built, checked and
+published. A short tour, for anyone extending it.
+
+Related: [ARCHITECTURE](ARCHITECTURE.md) for the shape of the whole system ·
+[DATASET](DATASET.md) for what comes out · [DECISIONS](DECISIONS.md) for the
+bugs these rules exist to prevent.
 
 ## The shape
 
@@ -12,6 +17,22 @@ A short tour, for anyone extending it.
 
 `data/raw` is the source of truth. `build` is a pure function of it, so
 deleting the database and rebuilding gives the same bytes back, offline.
+
+## Commands
+
+```bash
+python3 -m harness fetch              # download everything (resumable)
+python3 -m harness fetch banidb --stage angs
+python3 -m harness fetch --force      # ignore the cache and refetch
+python3 -m harness build --rebuild    # drop and rebuild the database
+python3 -m harness verify --online    # checks, incl. against the live API
+python3 -m harness export             # JSONL, CSV, plain text, checksums
+python3 -m harness static             # the publishable site
+python3 -m harness stats              # corpus summary
+python3 -m harness serve --port 8080  # the app, against a local API
+```
+
+Nothing beyond the Python standard library is required.
 
 ## Adding a source
 

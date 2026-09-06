@@ -1,7 +1,10 @@
-# Dataset reference
+# The corpus
 
 Everything in `data/processed/gurbani.sqlite`, field by field.
-Counts below are from the build of 2026-09-05.
+
+Related: [ARCHITECTURE](ARCHITECTURE.md) for how it is produced ·
+[HARNESS](HARNESS.md) for the pipeline · [GURMUKHI](GURMUKHI.md) for the
+search columns.
 
 ## At a glance
 
@@ -12,8 +15,27 @@ Counts below are from the build of 2026-09-05.
 | Translations | 820,549 across 11 streams |
 | Transliterations | 4 schemes, 142,403 lines each |
 | Banis | 104, comprising 25,697 lines |
+| Writers | 46 |
+| Raags | 66 |
+| Amrit Keertan index | 2,675 entries |
+| Rehat lines | 2,336 |
 | Sources | 7 |
 | Database size | ~394 MB |
+
+## Where it comes from
+
+**BaniDB**, stewarded by the Khalis Foundation, is the database behind
+SikhiToTheMax. It publishes no SQL dump, so the harness walks its public REST
+API exhaustively and keeps every response. It is standardised for *lagamatra*
+and *padh chhedh* against the SGPC's published pothis.
+
+**Shabad OS** is downloaded whole as a SQLite release asset and kept as an
+independent cross-check — a second project transcribing the same scripture
+from different printed sources, so disagreements are visible rather than
+invisible.
+
+Both are the work of volunteers. The harness rate-limits itself to well under
+BaniDB's published limit, and its on-disk cache means a re-run costs nothing.
 
 ## Sources
 
