@@ -10,7 +10,7 @@
  */
 
 import { el, clear, iconButton, sheet, segmented, sliderRow, switchRow, tap,
-         toast, onLongPress } from "../ui.js";
+         toast, swipeToAct } from "../ui.js";
 import { Icons } from "../icons.js";
 import { store, DEFAULTS } from "../store.js";
 import { getBani, getShabad, toLarivaar } from "../data.js";
@@ -73,7 +73,7 @@ export function readerView({ type, id, focusVerse = null }, { onBack }) {
     if (store.get("hintLongPress")) {
       setTimeout(() => {
         store.set("hintLongPress", false);
-        toast("Press and hold a line to save it");
+        toast("Swipe a line left to save it");
       }, 1600);
     }
     // Bar height varies with the notch, so measure rather than assume.
@@ -102,7 +102,7 @@ export function readerView({ type, id, focusVerse = null }, { onBack }) {
       }),
     ].filter(Boolean)));
 
-    record.lines.forEach((line, i) => {
+    record.lines.forEach((line) => {
       // No click handler on a line. Taps belong to the page - they bring the
       // chrome back - and a line that highlights itself when brushed while
       // scrolling is just noise.
@@ -112,12 +112,7 @@ export function readerView({ type, id, focusVerse = null }, { onBack }) {
       if (focusVerse != null && line.verseId === focusVerse) {
         box.classList.add("is-focus");
       }
-      // Only lines with a stable verse id can be kept: bani lines are numbered
-      // in their own id space and would not resolve back to a shabad.
-      if (line.verseId != null) {
-        if (store.isSaved(lineKey(line.verseId))) box.classList.add("is-saved");
-        onLongPress(box, () => openLineActions(line, box));
-      }
+
       // append() would stringify a `false`, so every optional node is
       // filtered out before it reaches the DOM.
       const add = (...nodes) => box.append(...nodes.filter(Boolean));
@@ -142,7 +137,30 @@ export function readerView({ type, id, focusVerse = null }, { onBack }) {
       // space. Mark those so the CSS can close the gaps up.
       if (box.childElementCount === 1) box.classList.add("is-bare");
 
-      inner.append(box);
+      // Only lines with a stable verse id can be kept: bani lines are numbered
+      // in their own id space and would not resolve back to a shabad.
+      if (line.verseId == null) {
+        inner.append(box);
+        return;
+      }
+      if (store.isSaved(lineKey(line.verseId))) box.classList.add("is-saved");
+
+      // Pull the line left to uncover a star. Press and hold is deliberately
+      // left alone, so it still selects text the way it does anywhere else.
+      const action = el("div.line-action", {}, [
+        el("div.star-well", { html: Icons.starFill }),
+      ]);
+      const row = el("div.line-row", {}, [action, box]);
+      swipeToAct(row, box, {
+        onTrigger: () => openLineActions(line, box),
+        onProgress: (progress, armed) => {
+          action.style.setProperty("--pull-scale", String(0.5 + progress * 0.55));
+          action.style.setProperty("--pull-opacity",
+                                   String(Math.min(1, progress * 1.4)));
+          action.classList.toggle("armed", armed);
+        },
+      });
+      inner.append(row);
     });
 
     updateSaveIcon();
@@ -274,12 +292,24 @@ export function readerView({ type, id, focusVerse = null }, { onBack }) {
   function toggleSave() {
     if (!record) return;
     tap();
-    const first = record.lines.find((l) => !l.isHeader) || record.lines[0];
+    // Which line stands for this shabad in the Saved list.
+    //
+    // If the reader arrived from a search, it is the line they searched for -
+    // that is what they will recognise. Otherwise it is the first real line,
+    // skipping the raag-and-mehla heading, which is identical across hundreds
+    // of shabads and tells you nothing about which one this is.
+    const ref =
+      (focusVerse != null &&
+        record.lines.find((l) => l.verseId === focusVerse)) ||
+      record.lines.find((l) => !l.isHeader && !isHeading(l.gurmukhi)) ||
+      record.lines[0];
+
     const nowSaved = store.toggleSaved({
       id: `${type}:${id}`, type, refId: id,
+      verseId: ref?.verseId ?? null,
       title: record.gurTitle || record.title,
       subtitle: record.subtitle || null,
-      gurmukhi: first?.gurmukhi || "",
+      gurmukhi: ref?.gurmukhi || "",
     });
     updateSaveIcon();
     toast(nowSaved
@@ -314,57 +344,51 @@ export function readerView({ type, id, focusVerse = null }, { onBack }) {
      text selection. */
   function openLineActions(line, box) {
     const saved = store.isSaved(lineKey(line.verseId));
+
     sheet(saved ? "Saved line" : "Save this line", (body, { close }) => {
-      body.append(el("div", {
-        style: { padding: "0 var(--s-5) var(--s-4)" },
-      }, [
-        el("div.gur", { text: line.gurmukhi, style: { fontSize: "1.3rem" } }),
-        line.translit && el("div.t-footnote.dim", {
-          text: line.translit,
-          style: { marginTop: "var(--s-2)", fontStyle: "italic" },
-        }),
+      // The line itself, shown the way it is shown when kept, so what you are
+      // about to save is what you will see in Saved.
+      body.append(el("div.sheet-quote", {}, [
+        el("div.gur", { text: line.gurmukhi }),
+        line.translit && el("div.tl", { text: line.translit }),
+        line.en && el("div.en", { text: line.en }),
       ].filter(Boolean)));
 
-      body.append(el("div.list", {}, [
-        el("button.row", {
-          onclick: () => {
-            const nowSaved = store.toggleSaved(lineEntry(line));
-            box.classList.toggle("is-saved", nowSaved);
-            if (nowSaved) {
-              box.classList.add("just-kept");
-              setTimeout(() => box.classList.remove("just-kept"), 900);
-            }
-            close();
-            toast(nowSaved ? "Line saved" : "Line removed", {
-              action: "Undo",
-              onAction: () => {
-                const back = store.toggleSaved(lineEntry(line));
-                box.classList.toggle("is-saved", back);
-              },
-            });
+      const primary = el("button.btn-primary", {}, [
+        el("span", { html: saved ? Icons.xmark : Icons.starFill,
+                     style: { display: "flex" } }),
+        el("span", { text: saved ? "Remove from Saved" : "Save line" }),
+      ]);
+      primary.onclick = () => {
+        const nowSaved = store.toggleSaved(lineEntry(line));
+        box.classList.toggle("is-saved", nowSaved);
+        if (nowSaved) {
+          box.classList.add("just-kept");
+          setTimeout(() => box.classList.remove("just-kept"), 900);
+        }
+        close();
+        toast(nowSaved ? "Line saved" : "Line removed", {
+          action: "Undo",
+          onAction: () => {
+            const back = store.toggleSaved(lineEntry(line));
+            box.classList.toggle("is-saved", back);
           },
-        }, [
-          el(`div.row-icon${saved ? "" : ".is-gold"}`, {
-            html: saved ? Icons.xmark : Icons.bookmarkFill,
-          }),
-          el("div.row-body", {}, [
-            el("div.row-title", {
-              text: saved ? "Remove from Saved" : "Save line",
-            }),
-          ]),
-        ]),
-        el("button.row", {
-          onclick: async () => {
-            const parts = [line.gurmukhi, line.translit, line.en].filter(Boolean);
-            try { await navigator.clipboard.writeText(parts.join("\n"));
-                  close(); toast("Copied"); }
-            catch { close(); toast("Could not copy"); }
-          },
-        }, [
-          el("div.row-icon", { html: Icons.textSize }),
-          el("div.row-body", {}, [el("div.row-title", { text: "Copy line" })]),
-        ]),
-      ]));
+        });
+      };
+
+      const secondary = el("button.btn-secondary", {}, [
+        el("span", { html: Icons.copy, style: { display: "flex" } }),
+        el("span", { text: "Copy line" }),
+      ]);
+      secondary.onclick = async () => {
+        const parts = [line.gurmukhi, line.translit, line.en].filter(Boolean);
+        try {
+          await navigator.clipboard.writeText(parts.join("\n"));
+          close(); toast("Copied");
+        } catch { close(); toast("Could not copy"); }
+      };
+
+      body.append(el("div.sheet-actions", {}, [primary, secondary]));
     });
   }
 
@@ -455,6 +479,11 @@ export function readerView({ type, id, focusVerse = null }, { onBack }) {
 
   return { root, destroy: () => { stopAuto(); hideSpeedPill(); } };
 }
+
+/* A raag-and-mehla heading - "ਸਿਰੀਰਾਗੁ ਮਹਲਾ ੧ ਘਰੁ ੪ ॥" - opens a great many
+ * shabads, so it is useless as a label for any one of them. */
+const isHeading = (text = "") =>
+  /\u0a2e\u0a39\u0a32\u0a3e|\u0a2e\u0a03/.test(text) && text.length < 40;
 
 /* ------------------------------------------------------------ shaping --- */
 function normaliseBani(d) {

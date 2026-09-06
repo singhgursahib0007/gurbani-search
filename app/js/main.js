@@ -62,9 +62,14 @@ function tabView(id) {
         go(item.shabadId
           ? `#/shabad/${item.shabadId}/${item.refId}`
           : `#/shabad/${item.refId}`);
+      } else if (item.type === "bani") {
+        go(`#/bani/${item.refId}`);
       } else {
-        go(item.type === "bani" ? `#/bani/${item.refId}`
-                                : `#/shabad/${item.refId}`);
+        // A kept shabad remembers the line it was kept at, so it reopens
+        // there rather than at its heading.
+        go(item.verseId
+          ? `#/shabad/${item.refId}/${item.verseId}`
+          : `#/shabad/${item.refId}`);
       }
     },
   });

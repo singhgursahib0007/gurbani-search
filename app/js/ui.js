@@ -259,6 +259,80 @@ export function onLongPress(node, handler, { ms = 500, slop = 12 } = {}) {
   node.addEventListener("contextmenu", (e) => e.preventDefault());
 }
 
+/* ------------------------------------------------- swipe to act -------- */
+/**
+ * Pull a row leftwards to reveal an action beneath it.
+ *
+ * The gesture has to share the screen with vertical scrolling, so the first
+ * few pixels decide who owns the touch: a mostly-vertical move hands it
+ * straight back to the scroller and never comes back for that touch. Only once
+ * the movement is clearly horizontal does this take over and call
+ * preventDefault, which is why the listener cannot be passive.
+ *
+ * Past the threshold the pull turns rubbery, so it feels like it is resisting
+ * rather than running out, and `onProgress` drives the artwork underneath.
+ */
+export function swipeToAct(row, mover, {
+  threshold = 88, max = 132, onTrigger, onProgress,
+} = {}) {
+  let sx = 0, sy = 0, dx = 0;
+  let own = null;          // null = undecided, true = ours, false = the scroller's
+  let armed = false;
+
+  const setX = (x) => { mover.style.transform = x ? `translateX(${x}px)` : ""; };
+
+  const progress = (x) => {
+    const p = Math.min(1, Math.abs(x) / threshold);
+    onProgress?.(p, armed);
+  };
+
+  const release = () => {
+    mover.classList.remove("swiping");
+    setX(0);
+    if (armed && onTrigger) { tap(20); onTrigger(); }
+    armed = false;
+    own = null;
+    dx = 0;
+    progress(0);
+  };
+
+  row.addEventListener("touchstart", (e) => {
+    if (e.touches.length !== 1) return;
+    sx = e.touches[0].clientX;
+    sy = e.touches[0].clientY;
+    own = null; dx = 0; armed = false;
+  }, { passive: true });
+
+  row.addEventListener("touchmove", (e) => {
+    if (own === false || e.touches.length !== 1) return;
+    const x = e.touches[0].clientX - sx;
+    const y = e.touches[0].clientY - sy;
+
+    if (own === null) {
+      if (Math.abs(y) > 10) { own = false; return; }      // it is a scroll
+      if (x < -12 && Math.abs(x) > Math.abs(y) * 1.4) {
+        own = true;
+        mover.classList.add("swiping");
+      } else {
+        return;
+      }
+    }
+
+    e.preventDefault();                                    // we own this touch
+    dx = Math.min(0, x);
+    // Past the threshold the pull gets heavy rather than simply stopping.
+    const over = Math.max(0, -dx - threshold);
+    const eased = -Math.min(threshold + over * 0.35, max);
+    setX(eased);
+    const nowArmed = -dx >= threshold;
+    if (nowArmed !== armed) { armed = nowArmed; if (armed) tap(12); }
+    progress(eased);
+  }, { passive: false });
+
+  row.addEventListener("touchend", () => { if (own) release(); else own = null; });
+  row.addEventListener("touchcancel", () => { if (own) release(); else own = null; });
+}
+
 export function emptyState(iconName, title, body) {
   return el("div.empty", {}, [
     el("div", { html: Icons[iconName] || "" }),

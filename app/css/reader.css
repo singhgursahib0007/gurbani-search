@@ -6,7 +6,11 @@
    lives in one sheet, a thumb's reach from the bottom edge.
    =========================================================================== */
 
-.reader { position: relative; height: 100dvh; display: flex; flex-direction: column; }
+.reader {
+  position: relative; height: 100dvh;
+  display: flex; flex-direction: column;
+  background: var(--bg-grouped);
+}
 
 .reader-scroll {
   flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
@@ -46,9 +50,40 @@
 }
 
 /* --- a line of Gurbani -------------------------------------------------- */
+/* A line and the action hiding behind it. The row clips, the line slides,
+   and the star underneath grows as it is uncovered. */
+.line-row {
+  position: relative;
+  overflow: hidden;
+}
+
+.line-action {
+  position: absolute; top: 0; bottom: 0; right: 0;
+  width: 108px;
+  display: grid; place-items: center;
+  pointer-events: none;
+}
+.line-action .star-well {
+  width: 52px; height: 52px; border-radius: var(--r-full);
+  display: grid; place-items: center;
+  background: var(--gold-quiet);
+  color: var(--gold);
+  transform: scale(var(--pull-scale, 0.5));
+  opacity: var(--pull-opacity, 0);
+  transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+}
+.line-action svg { width: 26px; height: 26px; }
+.line-action.armed .star-well {
+  background: var(--gold);
+  color: #fff;
+}
+
 .line {
+  position: relative;
+  background: var(--bg-grouped);
   padding: var(--s-4) 0;
-  transition: padding var(--dur-fast) var(--ease);
+  transition: padding var(--dur-fast) var(--ease),
+              transform 420ms var(--ease);
   border-bottom: 0.5px solid transparent;
   text-align: var(--reader-align);
   transition: background var(--dur-fast) var(--ease);
@@ -68,7 +103,10 @@
 /* The one line the reader came here for, marked so it can be found at a
    glance. Applied only when arriving from a search - never by tapping. */
 .line.is-focus {
-  background: var(--gold-quiet);
+  /* Layered over the page colour rather than replacing it: the tint is
+     translucent, and the swipe action sits directly behind this element. */
+  background: linear-gradient(var(--gold-quiet), var(--gold-quiet)),
+              var(--bg-grouped);
   box-shadow: inset 3px 0 0 var(--gold);
   padding-left: var(--s-4);
   padding-right: var(--s-3);
@@ -175,3 +213,6 @@
   100% { background: transparent; }
 }
 .line.just-kept { animation: line-kept 900ms var(--ease); }
+
+/* While a finger is on it the line must track exactly, with no easing. */
+.line.swiping { transition: none; }
