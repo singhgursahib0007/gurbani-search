@@ -1,0 +1,641 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GurbaniSearch</title>
+<style>
+:root{
+  --bg:#fbfaf7; --panel:#ffffff; --ink:#1b1a17; --muted:#6c6862;
+  --line:#e6e2da; --accent:#9a6b2f; --accent-soft:#f3ead9;
+  --gur:#14213d; --hi:#fff2c9;
+  --shadow:0 1px 2px rgba(0,0,0,.04),0 8px 24px rgba(0,0,0,.06);
+  --radius:12px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#14140f; --panel:#1c1c18; --ink:#eceae4; --muted:#9a958c;
+    --line:#2e2e28; --accent:#d8a860; --accent-soft:#33291a;
+    --gur:#d9e4ff; --hi:#4a3d17;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#14140f; --panel:#1c1c18; --ink:#eceae4; --muted:#9a958c;
+  --line:#2e2e28; --accent:#d8a860; --accent-soft:#33291a;
+  --gur:#d9e4ff; --hi:#4a3d17;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:15px/1.55 ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.gur{font-family:"Gurmukhi MN","Gurmukhi Sangam MN","Noto Sans Gurmukhi",
+  "Nirmala UI","Raavi",sans-serif; color:var(--gur); line-height:1.9}
+button,input,select{font:inherit;color:inherit}
+a{color:var(--accent)}
+
+/* layout */
+header{position:sticky;top:0;z-index:20;background:var(--bg);
+  border-bottom:1px solid var(--line)}
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+.brand{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;padding:16px 0 10px}
+.brand h1{margin:0;font-size:19px;letter-spacing:-.2px}
+.brand .sub{color:var(--muted);font-size:12.5px}
+.brand .spacer{flex:1}
+.iconbtn{background:none;border:1px solid var(--line);border-radius:8px;
+  padding:5px 10px;cursor:pointer;color:var(--muted);font-size:12.5px}
+.iconbtn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* search */
+.searchrow{display:flex;gap:8px;padding-bottom:10px}
+#q{flex:1;padding:12px 14px;border:1px solid var(--line);border-radius:var(--radius);
+  background:var(--panel);font-size:19px;outline:none;box-shadow:var(--shadow)}
+#q:focus{border-color:var(--accent)}
+#q.gurinput{font-family:"Gurmukhi MN","Gurmukhi Sangam MN","Noto Sans Gurmukhi",sans-serif;
+  letter-spacing:.04em}
+.modes{display:flex;gap:6px;flex-wrap:wrap;padding-bottom:12px}
+.chip{border:1px solid var(--line);background:var(--panel);border-radius:999px;
+  padding:5px 12px;font-size:12.5px;cursor:pointer;color:var(--muted);white-space:nowrap}
+.chip:hover{border-color:var(--accent)}
+.chip[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);
+  color:var(--ink);font-weight:600}
+
+/* keyboard */
+#kbd{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+  padding:12px;margin-bottom:14px;box-shadow:var(--shadow)}
+#kbd .kbrow{display:flex;gap:6px;margin-bottom:6px;flex-wrap:wrap}
+.key{min-width:42px;height:44px;border:1px solid var(--line);border-radius:9px;
+  background:var(--bg);cursor:pointer;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:0;padding:0 6px}
+.key:hover{border-color:var(--accent);background:var(--accent-soft)}
+.key .g{font-family:"Gurmukhi MN","Gurmukhi Sangam MN","Noto Sans Gurmukhi",sans-serif;
+  font-size:19px;color:var(--gur);line-height:1.1}
+.key .r{font-size:9px;color:var(--muted);line-height:1}
+.kbfoot{display:flex;gap:8px;align-items:center;margin-top:4px;
+  font-size:12px;color:var(--muted)}
+
+/* results */
+main{padding:18px 0 60px}
+.meta{color:var(--muted);font-size:12.5px;margin-bottom:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+  padding:14px 16px;margin-bottom:10px;cursor:pointer;box-shadow:var(--shadow)}
+.card:hover{border-color:var(--accent)}
+.card .line{font-size:22px;margin-bottom:6px}
+.card .tl{color:var(--muted);font-size:13.5px;font-style:italic;margin-bottom:4px}
+.card .tr{font-size:14px;margin-bottom:8px}
+.card .tag{display:flex;gap:10px;flex-wrap:wrap;color:var(--muted);font-size:11.5px}
+.card .fl{font-family:"Gurmukhi MN","Gurmukhi Sangam MN",sans-serif;
+  background:var(--hi);border-radius:4px;padding:0 5px;color:var(--gur)}
+
+/* shabad view */
+.panelhead{display:flex;gap:12px;align-items:center;flex-wrap:wrap;
+  padding:14px 0;border-bottom:1px solid var(--line);margin-bottom:14px}
+.panelhead h2{margin:0;font-size:17px}
+.toggles{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
+.verse{padding:14px 0;border-bottom:1px solid var(--line)}
+.verse .line{font-size:26px;margin-bottom:8px}
+.verse .tl{color:var(--muted);font-style:italic;margin-bottom:6px}
+.verse .tx{margin:4px 0}
+.verse .who{font-size:11px;color:var(--muted);text-transform:uppercase;
+  letter-spacing:.06em;margin-top:8px}
+.empty{color:var(--muted);padding:40px 0;text-align:center}
+.spin{display:inline-block;width:13px;height:13px;border:2px solid var(--line);
+  border-top-color:var(--accent);border-radius:50%;animation:s .7s linear infinite}
+@keyframes s{to{transform:rotate(360deg)}}
+footer{border-top:1px solid var(--line);color:var(--muted);font-size:12px;
+  padding:18px 0 40px}
+footer code{background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="brand">
+      <h1>GurbaniSearch</h1>
+      <span class="sub" id="stats">loading…</span>
+      <span class="spacer"></span>
+      <button class="iconbtn" id="kbtoggle">keyboard</button>
+      <button class="iconbtn" id="theme">theme</button>
+    </div>
+    <div class="searchrow">
+      <input id="q" class="gurinput" autocomplete="off" spellcheck="false"
+             placeholder="type the first letter of each word…">
+      <select id="source" class="iconbtn" style="padding:8px"></select>
+    </div>
+    <div class="modes" id="modes"></div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div id="kbd" hidden></div>
+  <div id="view"></div>
+</main>
+
+<footer class="wrap">
+  <div id="prov"></div>
+  <div style="margin-top:6px">
+    Local corpus in <code>data/processed/gurbani.sqlite</code>.
+    Rebuild with <code>python3 -m harness build --rebuild</code>.
+  </div>
+</footer>
+
+<script>window.GURBANI_STATIC = {base: "data/"};</script>
+<script>
+const $ = s => document.querySelector(s);
+const el = (t, c, x) => { const n=document.createElement(t);
+  if(c) n.className=c; if(x!==undefined) n.textContent=x; return n; };
+const esc = s => (s||'').replace(/[&<>]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+
+let META = null, MODE = 'first-letters', A2U = {}, TIMER = null;
+let SEARCH_TOKEN = 0, INDEX_READY = false;
+
+/* ------------------------------------------------------------------ *
+ * Data access.
+ *
+ * The same UI runs two ways. Against `harness serve` it asks the local
+ * API. Published as a static site (GitHub Pages, Vercel) there is no API,
+ * so it loads a ~1 MB first-letter index once and searches in memory,
+ * fetching one small JSON file per shabad on demand. `window.GURBANI_STATIC`
+ * is injected by `harness static` and decides which path is used.
+ * ------------------------------------------------------------------ */
+const STATIC = window.GURBANI_STATIC || null;
+
+const ApiBackend = () => ({
+  isStatic: false,
+  meta:   () => fetch('/api/meta').then(r => r.json()),
+  shabad: id => fetch(`/api/shabad/${id}`).then(r => r.json()),
+  bani:   id => fetch(`/api/bani/${id}`).then(r => r.json()),
+  search: (q, mode, source, limit) =>
+    fetch(`/api/search?q=${encodeURIComponent(q)}&mode=${mode}` +
+          `&source=${source}&limit=${limit}`).then(r => r.json()),
+});
+
+const StaticBackend = base => {
+  let lines = null;            // the searchable index, loaded once
+  let mainLetters = null;      // derived lazily, only if that mode is used
+  let enText = null;           // transliteration + English, only if needed
+  const shabadCache = new Map();
+  const MARKS = /[ਾ-੍ੑੵਁ-ਃੰੱ਼]/g;
+
+  const loadLines = async () => {
+    if (lines) return lines;
+    const text = await (await fetch(base + 'lines.tsv')).text();
+    const id = [], shabad = [], src = [], ang = [], line = [],
+          writer = [], raag = [], fl = [], gur = [];
+    // Skip the trailing empty element from the final newline.
+    const rows = text.split('\n');
+    if (rows[rows.length - 1] === '') rows.pop();
+    for (const row of rows) {
+      const c = row.split('\t');
+      id.push(+c[0]); shabad.push(+c[1]); src.push(c[2]);
+      ang.push(+c[3]); line.push(+c[4]); writer.push(+c[5]);
+      raag.push(+c[6]); fl.push(c[7]); gur.push(c[8]);
+    }
+    lines = {id, shabad, src, ang, line, writer, raag, fl, gur, n: id.length};
+    return lines;
+  };
+
+  const loadEnText = async () => {
+    if (enText) return enText;
+    const text = await (await fetch(base + 'text-en.tsv')).text();
+    const translit = [], trans = [];
+    const rows = text.split('\n');
+    if (rows[rows.length - 1] === '') rows.pop();
+    for (const row of rows) {
+      const c = row.split('\t');
+      translit.push(c[1] || ''); trans.push((c[2] || '').replace(/\\n/g, ' '));
+    }
+    enText = {translit, trans};
+    return enText;
+  };
+
+  return {
+    isStatic: true,
+    meta: () => fetch(base + 'meta.json').then(r => r.json()),
+    shabad: async id => {
+      if (shabadCache.has(id)) return shabadCache.get(id);
+      const d = await (await fetch(`${base}shabads/${Math.floor(id / 500)}/${id}.json`)).json();
+      shabadCache.set(id, d);
+      return d;
+    },
+    bani: id => fetch(`${base}banis/${id}.json`).then(r => r.json()),
+
+    async search(q, mode, source, limit) {
+      const L = await loadLines();
+      let hay, needle = q, note = null;
+
+      if (mode === 'first-letters' || mode === 'first-letters-anywhere') {
+        needle = toAscii(q);
+        if (!needle) return {mode, query: q, count: 0, results: [],
+                             note: 'no Gurmukhi letters in that query'};
+        note = 'letters: ' + needle;
+        hay = L.fl;
+      } else if (mode === 'main-letters') {
+        if (!mainLetters) mainLetters = L.gur.map(g => g.replace(MARKS, ''));
+        hay = mainLetters;
+      } else if (mode === 'gurmukhi') {
+        hay = L.gur;
+      } else if (mode === 'romanized' || mode === 'english') {
+        const T = await loadEnText();
+        hay = mode === 'romanized' ? T.translit : T.trans;
+        needle = q.toLowerCase();
+      }
+
+      const hits = [];
+      let count = 0;
+      const wantSource = source && source !== 'all';
+      const lower = (mode === 'romanized' || mode === 'english');
+
+      if (mode === 'ang') {
+        const n = parseInt((q.match(/\d+/) || [])[0], 10);
+        if (!n) return {mode, query: q, count: 0, results: [],
+                        note: 'enter an ang number'};
+        for (let i = 0; i < L.n; i++) {
+          if (L.ang[i] !== n) continue;
+          if (wantSource && L.src[i] !== source) continue;
+          count++; if (hits.length < limit) hits.push(i);
+        }
+      } else {
+        const starts = mode === 'first-letters';
+        for (let i = 0; i < L.n; i++) {
+          if (wantSource && L.src[i] !== source) continue;
+          let h = hay[i]; if (!h) continue;
+          if (lower) h = h.toLowerCase();
+          if (starts ? h.startsWith(needle) : h.includes(needle)) {
+            count++; if (hits.length < limit) hits.push(i);
+          }
+        }
+      }
+
+      const W = META ? META._writerById : {}, R = META ? META._raagById : {};
+      return {
+        mode, query: q, count, shown: hits.length, note,
+        results: hits.map(i => ({
+          verse_id: L.id[i], shabad_id: L.shabad[i], source_id: L.src[i],
+          page_no: L.ang[i], line_no: L.line[i], gurmukhi: L.gur[i],
+          first_letters_ascii: L.fl[i],
+          writer: W[L.writer[i]] || null, raag: R[L.raag[i]] || null,
+          translit_en: enText ? enText.translit[i] : null,
+          translation_en: enText ? enText.trans[i] : null,
+        })),
+      };
+    },
+  };
+};
+
+const DB = STATIC ? StaticBackend(STATIC.base) : ApiBackend();
+
+/* Fold a query typed in Unicode Gurmukhi (or clicked on the keyboard)
+   down to the ASCII letters the index is built from. */
+function toAscii(q) {
+  let out = '';
+  for (const ch of q.trim()) {
+    if (U2A[ch]) out += U2A[ch];
+    else if (ASCII_SET.has(ch)) out += ch;
+  }
+  return out;
+}
+let U2A = {}, ASCII_SET = new Set();
+
+
+/* ---- boot ---- */
+(async function(){
+  META = await DB.meta();
+  META._writerById = Object.fromEntries(
+    (META.writers || []).map(w => [w.writer_id, w.english]));
+  META._raagById = Object.fromEntries(
+    (META.raags || []).map(r => [r.raag_id, r.english]));
+  $('#stats').textContent =
+    `${META.totals.verses.toLocaleString()} verses · ` +
+    `${META.totals.shabads.toLocaleString()} shabads · ` +
+    `${META.totals.translations.toLocaleString()} translations`;
+
+  const modes = $('#modes');
+  for (const [key, label] of Object.entries(META.modes)) {
+    const b = el('button','chip',label);
+    b.setAttribute('aria-pressed', key===MODE);
+    b.onclick = () => { MODE = key;
+      [...modes.children].forEach(c=>c.setAttribute('aria-pressed', c===b));
+      $('#q').classList.toggle('gurinput', isGurmukhiMode());
+      $('#q').placeholder = placeholderFor(key);
+      $('#kbd').hidden = !isGurmukhiMode();
+      run(); $('#q').focus();
+    };
+    modes.appendChild(b);
+  }
+
+  const sel = $('#source');
+  sel.appendChild(new Option('All sources','all'));
+  META.sources.filter(s=>s.verses>0).forEach(s =>
+    sel.appendChild(new Option(`${s.english} (${s.verses.toLocaleString()})`, s.source_id)));
+  sel.onchange = run;
+
+  buildKeyboard();
+  $('#kbd').hidden = false;
+
+  $('#q').addEventListener('input', () => {
+    clearTimeout(TIMER); TIMER = setTimeout(run, 160);
+  });
+  $('#kbtoggle').onclick = () => $('#kbd').hidden = !$('#kbd').hidden;
+  $('#theme').onclick = () => {
+    const cur = document.documentElement.getAttribute('data-theme');
+    const next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try { localStorage.setItem('theme', next); } catch(e){}
+  };
+  try { const t = localStorage.getItem('theme');
+        if (t) document.documentElement.setAttribute('data-theme', t); } catch(e){}
+
+  const p = META.provenance || {};
+  $('#prov').innerHTML = Object.values(p).map(s =>
+    `<b>${esc(s.title)}</b> — ${esc(s.steward)}${s.notes ? ' · ' + esc(s.notes) : ''}`
+  ).join('<br>');
+
+  showBanis();
+  $('#q').focus();
+  window.onpopstate = route; route();
+})();
+
+function isGurmukhiMode(){
+  return ['first-letters','first-letters-anywhere','gurmukhi','main-letters']
+    .includes(MODE);
+}
+function placeholderFor(m){
+  return ({
+    'first-letters':'first letter of each word, from the line start…',
+    'first-letters-anywhere':'first letters appearing anywhere in the line…',
+    'gurmukhi':'a whole word in Gurmukhi…',
+    'romanized':'a word in transliteration, e.g. satgur…',
+    'english':'a word from the English translation…',
+    'main-letters':'consonants only, vowel signs ignored…',
+    'ang':'an ang (page) number…'
+  })[m] || '';
+}
+
+/* ---- Gurmukhi keyboard ---- */
+function buildKeyboard(){
+  const box = $('#kbd'); box.innerHTML = '';
+  META.keyboard.forEach(row => {
+    const r = el('div','kbrow');
+    row.forEach(k => {
+      A2U[k.ascii] = k.unicode;
+      U2A[k.unicode] = k.ascii;
+      ASCII_SET.add(k.ascii);
+      const b = el('button','key');
+      b.title = `${k.name}  (types "${k.ascii}")`;
+      b.appendChild(el('span','g', k.unicode));
+      b.appendChild(el('span','r', k.name));
+      b.onclick = () => { $('#q').value += k.unicode; run(); $('#q').focus(); };
+      r.appendChild(b);
+    });
+    box.appendChild(r);
+  });
+  const foot = el('div','kbfoot');
+  const back = el('button','iconbtn','⌫ delete');
+  back.onclick = () => { const i=$('#q'); i.value = i.value.slice(0,-1); run(); i.focus(); };
+  const clear = el('button','iconbtn','clear');
+  clear.onclick = () => { $('#q').value=''; run(); $('#q').focus(); };
+  foot.append(back, clear,
+    el('span','', 'Tap a letter, or type its Latin key on your keyboard.'));
+  box.appendChild(foot);
+}
+
+/* ---- search ---- */
+async function run(){
+  const q = $('#q').value.trim();
+  if (!q) { showBanis(); return; }
+  const token = ++SEARCH_TOKEN;
+  $('#view').innerHTML = '<div class="empty"><span class="spin"></span>' +
+    (DB.isStatic && !INDEX_READY
+      ? '<div style="margin-top:10px">loading the search index…</div>' : '') +
+    '</div>';
+  const data = await DB.search(q, MODE, $('#source').value, 100);
+  INDEX_READY = true;
+  if (token !== SEARCH_TOKEN) return;   // a newer keystroke already won
+  renderResults(data);
+}
+
+function renderResults(d){
+  const v = $('#view'); v.innerHTML = '';
+  if (d.error) { v.appendChild(el('div','empty', d.error)); return; }
+  const meta = el('div','meta');
+  meta.textContent = d.count
+    ? `${d.count.toLocaleString()} line${d.count===1?'':'s'} matched` +
+      (d.shown < d.count ? ` · showing first ${d.shown}` : '') +
+      (d.note ? ` · ${d.note}` : '')
+    : 'no matches';
+  v.appendChild(meta);
+  if (!d.count) {
+    v.appendChild(el('div','empty','Try a different mode, or fewer letters.'));
+    return;
+  }
+  d.results.forEach(r => v.appendChild(resultCard(r, d)));
+  if (DB.isStatic) enrichVisible(v);
+}
+
+function resultCard(r, d){
+  const c = el('div','card');
+  c.onclick = () => go(`#/shabad/${r.shabad_id}`);
+  c.dataset.shabad = r.shabad_id;
+  c.dataset.verse = r.verse_id;
+  c.appendChild(el('div','line gur', r.gurmukhi));
+  // Placeholders stay in the DOM so enrichVisible can fill them in later.
+  c.appendChild(el('div','tl', r.translit_en || ''));
+  c.appendChild(el('div','tr', r.translation_en || ''));
+  const tag = el('div','tag');
+  const src = (META.sources.find(s=>s.source_id===r.source_id)||{}).english || r.source_id;
+  tag.appendChild(el('span','', `${src} · Ang ${r.page_no}`));
+  if (r.writer) tag.appendChild(el('span','', r.writer));
+  if (r.raag)   tag.appendChild(el('span','', r.raag));
+  if (r.first_letters_ascii){
+    const fl = el('span','fl', toUni(r.first_letters_ascii));
+    fl.title = 'first letters of this line';
+    tag.appendChild(fl);
+  }
+  c.appendChild(tag);
+  return c;
+}
+const toUni = s => [...(s||'')].map(ch => A2U[ch] || ch).join('');
+
+/* In static mode a result card starts with only its Gurmukhi line - the
+   index deliberately does not carry every translation. As each card scrolls
+   into view we pull its shabad file (a couple of KB, cached, and shared by
+   every line of that shabad) and fill in the rest. */
+function enrichVisible(root){
+  const io = new IntersectionObserver(async (entries) => {
+    for (const e of entries) {
+      if (!e.isIntersecting) continue;
+      const card = e.target;
+      io.unobserve(card);
+      if (card.dataset.filled) continue;
+      card.dataset.filled = '1';
+      try {
+        const d = await DB.shabad(+card.dataset.shabad);
+        const vs = (d.verses || []).find(x => x.verse_id === +card.dataset.verse);
+        if (!vs) continue;
+        const tl = card.querySelector('.tl'), tr = card.querySelector('.tr');
+        if (tl && !tl.textContent && vs.translit_en) tl.textContent = vs.translit_en;
+        const en = vs.translation && vs.translation.en &&
+                   (vs.translation.en.bdb || vs.translation.en.ssk);
+        if (tr && !tr.textContent && en) tr.textContent = en;
+      } catch (err) { /* a missing shabad file must not break the list */ }
+    }
+  }, {rootMargin: '200px'});
+  root.querySelectorAll('.card[data-shabad]').forEach(c => io.observe(c));
+}
+
+/* ---- shabad view ---- */
+let SHOW = { translit:true, en:'bdb', pu:'ss', larivaar:false };
+
+async function showShabad(id){
+  const v = $('#view');
+  v.innerHTML = '<div class="empty"><span class="spin"></span></div>';
+  const d = await DB.shabad(id);
+  if (d.error){ v.innerHTML=''; v.appendChild(el('div','empty', d.error)); return; }
+  v.innerHTML = '';
+
+  const head = el('div','panelhead');
+  const s = d.shabad;
+  const h = el('h2','', `${s.source_english || s.source_id} · Ang ${s.page_no||'?'}`);
+  head.appendChild(h);
+  const sub = el('div','meta','');
+  sub.textContent = [s.writer, s.raag].filter(Boolean).join(' · ');
+  sub.style.margin = '0';
+  head.appendChild(sub);
+
+  const tg = el('div','toggles');
+  const mk = (label, on, fn) => {
+    const b = el('button','chip',label);
+    b.setAttribute('aria-pressed', on);
+    b.onclick = () => { fn(); showShabad(id); };
+    return b;
+  };
+  tg.appendChild(mk('back to results', false, () => history.back()));
+  tg.appendChild(mk('transliteration', SHOW.translit,
+    () => SHOW.translit = !SHOW.translit));
+  tg.appendChild(mk('larivaar', SHOW.larivaar, () => SHOW.larivaar = !SHOW.larivaar));
+  head.appendChild(tg);
+  v.appendChild(head);
+
+  // translator pickers, built from what this shabad actually has
+  const avail = { en:new Set(), pu:new Set(), es:new Set() };
+  d.verses.forEach(vs => Object.entries(vs.translation||{}).forEach(([lang,m]) =>
+    Object.keys(m).forEach(k => avail[lang] && avail[lang].add(k))));
+  const picker = el('div','modes');
+  for (const lang of ['en','pu','es']) {
+    [...avail[lang]].sort().forEach(k => {
+      const t = META.translators.find(x=>x.lang===lang && x.translator===k);
+      const b = el('button','chip', (t && t.name) || `${lang}.${k}`);
+      const active = SHOW[lang] === k;
+      b.setAttribute('aria-pressed', active);
+      if (t) b.title = t.description;
+      b.onclick = () => { SHOW[lang] = active ? null : k; showShabad(id); };
+      picker.appendChild(b);
+    });
+  }
+  v.appendChild(picker);
+
+  d.verses.forEach(vs => {
+    const box = el('div','verse');
+    // Larivaar is the line with its spaces removed - true for every line in
+    // the corpus - so the static build ships only the spaced form.
+    const text = SHOW.larivaar
+      ? (vs.larivaar || (vs.gurmukhi || '').replace(/ /g, ''))
+      : vs.gurmukhi;
+    box.appendChild(el('div','line gur', text));
+    if (SHOW.translit && vs.translit_en) box.appendChild(el('div','tl', vs.translit_en));
+    for (const lang of ['en','pu','es']) {
+      const key = SHOW[lang];
+      const txt = key && vs.translation && vs.translation[lang]
+                  && vs.translation[lang][key];
+      if (!txt) continue;
+      const t = META.translators.find(x=>x.lang===lang && x.translator===key);
+      const p = el('div','tx' + (lang==='pu' ? ' gur' : ''), txt);
+      box.appendChild(p);
+      box.appendChild(el('div','who', (t && t.name) || `${lang}.${key}`));
+    }
+    v.appendChild(box);
+  });
+
+  const nav = el('div','panelhead');
+  if (d.nav && d.nav.prev){
+    const b = el('button','chip','← previous shabad');
+    b.onclick = () => go(`#/shabad/${d.nav.prev}`); nav.appendChild(b);
+  }
+  if (d.nav && d.nav.next){
+    const b = el('button','chip','next shabad →');
+    b.onclick = () => go(`#/shabad/${d.nav.next}`); nav.appendChild(b);
+  }
+  v.appendChild(nav);
+  window.scrollTo(0,0);
+}
+
+/* ---- banis (landing view) ---- */
+function showBanis(){
+  const v = $('#view'); v.innerHTML = '';
+  if (!META) return;
+  v.appendChild(el('div','meta',
+    'Start typing above, or open a bani. ' +
+    'First-letter search is the default: type the first letter of each word.'));
+  const grid = el('div');
+  META.banis.slice(0, 40).forEach(b => {
+    const c = el('div','card');
+    c.style.padding = '10px 14px';
+    c.onclick = () => go(`#/bani/${b.bani_id}`);
+    const t = el('div','line gur', b.unicode); t.style.fontSize='19px';
+    c.appendChild(t);
+    c.appendChild(el('div','tag', `${b.english||''} · ${b.verse_count} lines`));
+    grid.appendChild(c);
+  });
+  v.appendChild(grid);
+}
+
+async function showBani(id){
+  const v = $('#view');
+  v.innerHTML = '<div class="empty"><span class="spin"></span></div>';
+  const d = await DB.bani(id);
+  v.innerHTML = '';
+  if (d.error){ v.appendChild(el('div','empty', d.error)); return; }
+  const head = el('div','panelhead');
+  head.appendChild(el('h2','', d.bani.english || ''));
+  const g = el('div','gur', d.bani.unicode); g.style.fontSize='20px';
+  head.appendChild(g);
+  const tg = el('div','toggles');
+  const back = el('button','chip','← all banis');
+  back.onclick = () => go('#/'); tg.appendChild(back);
+  head.appendChild(tg);
+  v.appendChild(head);
+  d.verses.forEach(vs => {
+    const box = el('div','verse');
+    if (vs.is_header) box.style.opacity = '.72';
+    box.appendChild(el('div','line gur', vs.gurmukhi));
+    if (vs.translit_en) box.appendChild(el('div','tl', vs.translit_en));
+    if (vs.translation_en) box.appendChild(el('div','tx', vs.translation_en));
+    if (vs.translation_pu) box.appendChild(el('div','tx gur', vs.translation_pu));
+    const m = ['exists_sgpc','exists_taksal','exists_medium','exists_buddhadal']
+      .filter(k => vs[k]).map(k => k.replace('exists_',''));
+    if (m.length && m.length < 4)
+      box.appendChild(el('div','who', 'recited in: ' + m.join(', ')));
+    v.appendChild(box);
+  });
+  window.scrollTo(0,0);
+}
+
+/* ---- routing ---- */
+function go(hash){ location.hash = hash; }
+function route(){
+  const h = location.hash;
+  let m;
+  // The keyboard is for composing a query; it only gets in the way while
+  // reading, so it collapses in the reading views and returns on search.
+  const reading = /^#\/(shabad|bani)\//.test(h);
+  $('#kbd').hidden = reading || !isGurmukhiMode();
+  if (m = h.match(/^#\/shabad\/(\d+)/)) return showShabad(+m[1]);
+  if (m = h.match(/^#\/bani\/(\d+)/))   return showBani(+m[1]);
+  if ($('#q').value.trim()) return run();
+  showBanis();
+}
+window.addEventListener('hashchange', route);
+</script>
+</body>
+</html>
