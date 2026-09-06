@@ -34,8 +34,8 @@ TABS.forEach((t) => {
   const b = el("button.tab", {
     role: "tab", "aria-selected": "false", "aria-label": t.label,
     onclick: () => go(`#/${t.id}`),
-  }, [el("span", { html: Icons[t.icon], style: { display: "flex" } }),
-      el("span", { text: t.label })]);
+  }, [el("span.tab-ico", { html: Icons[t.icon] }),
+      el("span.tab-label", { text: t.label })]);
   tabButtons[t.id] = b;
   tabbar.append(b);
 });
