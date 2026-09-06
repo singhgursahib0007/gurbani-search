@@ -9,7 +9,7 @@ import { Icons } from "../icons.js";
 import { store } from "../store.js";
 import { getMeta } from "../data.js";
 
-export function banisView({ onOpenBani }) {
+export function banisView({ onOpenBani, onContinue }) {
   const root = el("div.screen");
   const scroll = el("div.scroll.pad-tabbar");
   const navbar = el("div.navbar", {}, [
@@ -41,14 +41,18 @@ export function banisView({ onOpenBani }) {
 
     /* continue reading */
     const last = store.get("lastRead");
-    if (last && last.type === "bani") {
+    if (last && last.id != null) {
+      const progress = store.getProgress(`${last.type}:${last.id}`);
+      const started = progress && progress.line > 0;
       inner.append(el("div.section-label", { text: "Continue" }));
       inner.append(el("div.list", {}, [
-        el("button.row", { onclick: () => onOpenBani(last.id) }, [
+        el("button.row", { onclick: () => onContinue(last) }, [
           el("div.row-icon.is-gold", { html: Icons.bookFill }),
           el("div.row-body", {}, [
             el("div.row-title", { text: last.title }),
-            el("div.row-sub", { text: "Pick up where you left off" }),
+            el("div.row-sub", {
+              text: started ? "Pick up where you left off" : "Start reading",
+            }),
           ]),
           el("div.row-trail", { html: Icons.chevronRight }),
         ]),

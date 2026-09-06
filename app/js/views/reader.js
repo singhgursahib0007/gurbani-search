@@ -83,6 +83,7 @@ export function readerView({ type, id, focusVerse = null }, { onBack }) {
     });
     // rAF does not fire in a background tab; a timer guarantees the jump.
     setTimeout(revealFocus, 120);
+    setTimeout(restorePosition, 140);
   })();
 
   /* --------------------------------------------------------- rendering -- */
@@ -102,12 +103,16 @@ export function readerView({ type, id, focusVerse = null }, { onBack }) {
       }),
     ].filter(Boolean)));
 
-    record.lines.forEach((line) => {
+    record.lines.forEach((line, index) => {
+      line.index = index;
       // No click handler on a line. Taps belong to the page - they bring the
       // chrome back - and a line that highlights itself when brushed while
       // scrolling is just noise.
       const box = el(`div.line${line.isHeader ? ".is-header" : ""}`, {
-        dataset: { verse: line.verseId != null ? String(line.verseId) : "" },
+        dataset: {
+          verse: line.verseId != null ? String(line.verseId) : "",
+          i: String(line.index),
+        },
       });
       if (focusVerse != null && line.verseId === focusVerse) {
         box.classList.add("is-focus");
@@ -201,8 +206,45 @@ export function readerView({ type, id, focusVerse = null }, { onBack }) {
     scroller.classList.remove("no-smooth");
   }
 
+  /* --------------------------------------------------- reading position -- */
+  const progressKey = `${type}:${id}`;
+
+  /** The line currently at the top of the page. */
+  function topLineIndex() {
+    const y = scroller.scrollTop + 8;
+    const boxes = inner.querySelectorAll(".line[data-i]");
+    for (const box of boxes) {
+      const el_ = box.closest(".line-row") || box;
+      if (el_.offsetTop + el_.offsetHeight > y) return Number(box.dataset.i);
+    }
+    return 0;
+  }
+
+  function rememberPosition() {
+    if (!record) return;
+    store.setProgress(progressKey, topLineIndex());
+  }
+
+  /* Put the reader back where they stopped. Skipped when they arrived from a
+     search or a saved line, because that destination is more specific than
+     wherever they happened to leave off. */
+  let restored = false;
+  function restorePosition() {
+    if (restored || focusVerse != null) return;
+    const saved = store.getProgress(progressKey);
+    if (!saved || !saved.line) { restored = true; return; }
+    const box = inner.querySelector(`.line[data-i="${saved.line}"]`);
+    if (!box) return;
+    restored = true;
+    const el_ = box.closest(".line-row") || box;
+    scroller.classList.add("no-smooth");
+    scroller.scrollTop = Math.max(0, el_.offsetTop - bar.offsetHeight - 8);
+    void scroller.scrollTop;
+    scroller.classList.remove("no-smooth");
+  }
+
   /* ------------------------------------------------------- chrome & scroll */
-  let lastY = 0, hidden = false;
+  let lastY = 0, hidden = false, saveTimer = null;
   scroller.addEventListener("scroll", () => {
     const y = scroller.scrollTop;
     const max = scroller.scrollHeight - scroller.clientHeight;
@@ -217,6 +259,10 @@ export function readerView({ type, id, focusVerse = null }, { onBack }) {
       }
       lastY = y;
     }
+
+    // Throttled: a scroll fires far too often to write storage on each one.
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(rememberPosition, 450);
   }, { passive: true });
 
   // A tap anywhere brings the chrome back, and puts it away again.
@@ -477,7 +523,15 @@ export function readerView({ type, id, focusVerse = null }, { onBack }) {
     });
   }
 
-  return { root, destroy: () => { stopAuto(); hideSpeedPill(); } };
+  return {
+    root,
+    destroy: () => {
+      clearTimeout(saveTimer);
+      rememberPosition();     // catch the position on the way out
+      stopAuto();
+      hideSpeedPill();
+    },
+  };
 }
 
 /* A raag-and-mehla heading - "ਸਿਰੀਰਾਗੁ ਮਹਲਾ ੧ ਘਰੁ ੪ ॥" - opens a great many

@@ -48,7 +48,11 @@ let reader = null;
 
 function tabView(id) {
   if (views[id]) return views[id];
-  if (id === "banis") views[id] = banisView({ onOpenBani: (b) => go(`#/bani/${b}`) });
+  if (id === "banis") views[id] = banisView({
+    onOpenBani: (b) => go(`#/bani/${b}`),
+    onContinue: (last) =>
+      go(last.type === "bani" ? `#/bani/${last.id}` : `#/shabad/${last.id}`),
+  });
   if (id === "search") views[id] = searchView({
     // The matched verse rides along in the route, so the reader can open
     // straight at the line rather than at the top of its shabad.
