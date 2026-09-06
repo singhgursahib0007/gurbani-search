@@ -54,7 +54,7 @@
 
   /* --- reader (overridden by user preference) -------------------------- */
   --reader-scale: 1;
-  --reader-align: right;
+  --reader-align: center;
   --reader-measure: 40rem;
 
   --tap: 44px;              /* Apple's minimum touch target */

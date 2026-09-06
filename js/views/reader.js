@@ -121,6 +121,12 @@ export function readerView({ type, id, focusVerse = null }, { onBack }) {
       if (p.translationPa && line.pa)
         add(el("div.tr.pa.gur", { text: line.pa }),
             p.showAttribution && el("div.who", { text: "Prof. Sahib Singh" }));
+
+      // With every translation switched off a line is one short phrase, and
+      // the padding sized for a block of prose leaves it stranded in white
+      // space. Mark those so the CSS can close the gaps up.
+      if (box.childElementCount === 1) box.classList.add("is-bare");
+
       inner.append(box);
     });
 
