@@ -15,7 +15,7 @@ import { Icons } from "../icons.js";
 import { store, DEFAULTS } from "../store.js";
 import { getBani, getShabad, toLarivaar } from "../data.js";
 import { textControls } from "./typography.js";
-import { titleCase } from "./banis.js";
+import { BANI_INFO } from "../banis-info.js";
 
 const THEMES = [
   { value: "auto",  label: "Auto",  bg: "linear-gradient(135deg,#fff 50%,#0C1524 50%)", fg: "#7FA8E8" },
@@ -547,12 +547,19 @@ const isHeading = (text = "") =>
   /\u0a2e\u0a39\u0a32\u0a3e|\u0a2e\u0a03/.test(text) && text.length < 40;
 
 /* ------------------------------------------------------------ shaping --- */
+/* The catalogue's English field is a transliteration; the curated table has
+ * the name as it is actually written. Note the bani record calls its id
+ * `baniID`, not `bani_id`. */
+const baniEnglish = (info) =>
+  (BANI_INFO[info.baniID] && BANI_INFO[info.baniID].name) ||
+  info.english || "Bani";
+
 function normaliseBani(d) {
   const info = d.bani || {};
   return {
-    title: titleCase(info.english || "Bani"),
+    title: baniEnglish(info),
     gurTitle: info.unicode || null,
-    subtitle: titleCase(info.english || "") || null,
+    subtitle: baniEnglish(info) || null,
     lines: (d.verses || []).map((v, i) => ({
       // Bani verses are numbered in their own id space, so a line here is
       // named by its position in the bani instead.

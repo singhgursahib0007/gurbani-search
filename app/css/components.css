@@ -404,3 +404,50 @@
   display: flex; align-items: center; gap: 6px;
 }
 .saved-line .where svg { width: 13px; height: 13px; opacity: .8; }
+
+/* --------------------------------------------------- toolbar ----------- */
+/* Search and arrange, sitting under the large title and collapsing with it. */
+.toolbar {
+  display: flex; align-items: center; gap: var(--s-2);
+  padding: 0 var(--s-4) var(--s-3);
+}
+
+.field {
+  flex: 1; min-width: 0;
+  display: flex; align-items: center; gap: var(--s-2);
+  height: 38px; padding: 0 var(--s-2) 0 var(--s-3);
+  background: var(--bg-sunken);
+  border-radius: var(--r-md);
+}
+.field-icon { display: flex; color: var(--label-3); }
+.field-icon svg { width: 17px; height: 17px; }
+.field-input {
+  flex: 1; min-width: 0;
+  background: none; border: 0; outline: none;
+  font-size: var(--t-callout);
+  -webkit-appearance: none; appearance: none;
+}
+.field-input::-webkit-search-cancel-button { display: none; }
+.field-input::placeholder { color: var(--label-3); }
+.field-clear { width: 30px; height: 30px; flex: none; }
+.field-clear svg { width: 16px; height: 16px; }
+
+.chip-btn {
+  flex: none;
+  display: flex; align-items: center; gap: 6px;
+  height: 38px; padding: 0 var(--s-3);
+  border-radius: var(--r-md);
+  background: var(--bg-sunken);
+  color: var(--accent);
+  font-size: var(--t-subhead); font-weight: 600;
+  white-space: nowrap;
+}
+.chip-btn svg { width: 17px; height: 17px; }
+.chip-btn:active { background: var(--fill-strong); }
+
+/* The toolbar folds away with the large title as the list scrolls. */
+.navbar.scrolled .toolbar {
+  opacity: 0; height: 0; padding-top: 0; padding-bottom: 0;
+  overflow: hidden; pointer-events: none;
+  transition: opacity var(--dur-fast) var(--ease);
+}
