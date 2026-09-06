@@ -33,6 +33,7 @@ export const DEFAULTS = Object.freeze({
   autoScrollSpeed: 30,       // 10 (slow) – 100 (fast)
   keepAwakeHint: true,
   hintLongPress: true,       // shown once, the first time a reader opens
+  baniSort: "category",      // category | english | gurmukhi
   favourites: [],            // bani ids, in the order the reader starred them
   saved: [],                 // saved shabads: {id, gurmukhi, at}
   lastRead: null,            // {type:'bani'|'shabad', id, title, at}
