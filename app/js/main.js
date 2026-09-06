@@ -50,7 +50,9 @@ function tabView(id) {
   if (views[id]) return views[id];
   if (id === "banis") views[id] = banisView({ onOpenBani: (b) => go(`#/bani/${b}`) });
   if (id === "search") views[id] = searchView({
-    onOpenShabad: (s) => go(`#/shabad/${s}`),
+    // The matched verse rides along in the route, so the reader can open
+    // straight at the line rather than at the top of its shabad.
+    onOpenShabad: (shabad, verse) => go(`#/shabad/${shabad}/${verse}`),
   });
   if (id === "saved") views[id] = savedView({
     onOpen: (item) => go(item.type === "bani" ? `#/bani/${item.refId}`
@@ -96,10 +98,13 @@ function route() {
     mount(reader.root);
     return;
   }
-  if ((m = h.match(/^#\/shabad\/(\d+)/))) {
+  if ((m = h.match(/^#\/shabad\/(\d+)(?:\/(\d+))?/))) {
     tabbar.classList.add("hidden");
     reader?.destroy?.();
-    reader = readerView({ type: "shabad", id: +m[1] }, { onBack: back });
+    reader = readerView(
+      { type: "shabad", id: +m[1], focusVerse: m[2] ? +m[2] : null },
+      { onBack: back },
+    );
     mount(reader.root);
     return;
   }

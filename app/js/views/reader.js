@@ -24,7 +24,7 @@ const THEMES = [
   { value: "night", label: "Night", bg: "#000000", fg: "#C8D2E0" },
 ];
 
-export function readerView({ type, id }, { onBack }) {
+export function readerView({ type, id, focusVerse = null }, { onBack }) {
   const root = el("div.reader");
   const scroller = el("div.reader-scroll");
   const inner = el("div.reader-inner");
@@ -70,7 +70,10 @@ export function readerView({ type, id }, { onBack }) {
     // Bar height varies with the notch, so measure rather than assume.
     requestAnimationFrame(() => {
       scroller.style.paddingTop = bar.offsetHeight + "px";
+      revealFocus();
     });
+    // rAF does not fire in a background tab; a timer guarantees the jump.
+    setTimeout(revealFocus, 120);
   })();
 
   /* --------------------------------------------------------- rendering -- */
@@ -79,22 +82,27 @@ export function readerView({ type, id }, { onBack }) {
     const p = store.all;
     clear(inner);
 
-    inner.append(el("header", { style: { padding: "var(--s-6) 0 var(--s-4)" } }, [
-      el("h1.t-large-title.gur", { text: record.gurTitle || record.title }),
+    inner.append(el("header", {
+      style: { padding: "var(--s-6) 0 var(--s-5)", textAlign: "center" },
+    }, [
+      record.gurTitle
+        ? el("h1.t-large-title.gur", { text: record.gurTitle })
+        : el("h1.t-title-2", { text: record.title }),
       record.subtitle && el("p.t-subhead.dim", {
         text: record.subtitle, style: { marginTop: "var(--s-2)" },
       }),
-    ]));
+    ].filter(Boolean)));
 
     record.lines.forEach((line, i) => {
+      // No click handler on a line. Taps belong to the page - they bring the
+      // chrome back - and a line that highlights itself when brushed while
+      // scrolling is just noise.
       const box = el(`div.line${line.isHeader ? ".is-header" : ""}`, {
-        dataset: { i: String(i) },
-        onclick: (e) => {
-          // Tapping a line marks your place; tapping the page toggles chrome.
-          e.stopPropagation();
-          box.classList.toggle("is-active");
-        },
+        dataset: { verse: line.verseId != null ? String(line.verseId) : "" },
       });
+      if (focusVerse != null && line.verseId === focusVerse) {
+        box.classList.add("is-focus");
+      }
       // append() would stringify a `false`, so every optional node is
       // filtered out before it reaches the DOM.
       const add = (...nodes) => box.append(...nodes.filter(Boolean));
@@ -128,6 +136,32 @@ export function readerView({ type, id }, { onBack }) {
     }
   });
 
+  /* Bring the line that was searched for into view. Not centred: a line sits
+     better a third of the way down, with the lines that lead to it visible
+     above. */
+  let revealed = false;
+  function revealFocus() {
+    if (revealed || focusVerse == null) return;
+    const target = inner.querySelector(`.line[data-verse="${focusVerse}"]`);
+    if (!target) return;
+    revealed = true;
+    const top = Math.max(0, target.offsetTop - Math.round(scroller.clientHeight * 0.3));
+
+    // The jump must be instantaneous, not animated: smoothly scrolling the
+    // reader through the whole shabad to reach their line is slow and makes
+    // them watch it happen.
+    //
+    // Note that scrollTo({behavior: "auto"}) does NOT do this - "auto" means
+    // "use the CSS scroll-behavior", which is smooth here for auto-scroll. So
+    // the smooth behaviour is switched off around the jump, which also works
+    // on Safari versions predating behavior: "instant".
+    scroller.classList.add("no-smooth");
+    scroller.scrollTop = top;
+    // Read back before restoring, so the jump is committed first.
+    void scroller.scrollTop;
+    scroller.classList.remove("no-smooth");
+  }
+
   /* ------------------------------------------------------- chrome & scroll */
   let lastY = 0, hidden = false;
   scroller.addEventListener("scroll", () => {
@@ -146,11 +180,11 @@ export function readerView({ type, id }, { onBack }) {
     }
   }, { passive: true });
 
+  // A tap anywhere brings the chrome back, and puts it away again.
   scroller.addEventListener("click", () => {
-    if (!hidden) return;
-    hidden = false;
-    bar.classList.remove("hidden");
-    fabs.classList.remove("hidden");
+    hidden = !hidden;
+    bar.classList.toggle("hidden", hidden);
+    fabs.classList.toggle("hidden", hidden);
   });
 
   /* ----------------------------------------------------------- autoscroll */
@@ -324,9 +358,10 @@ function normaliseBani(d) {
   const info = d.bani || {};
   return {
     title: titleCase(info.english || "Bani"),
-    gurTitle: info.unicode || info.english,
-    subtitle: null,
+    gurTitle: info.unicode || null,
+    subtitle: titleCase(info.english || "") || null,
     lines: (d.verses || []).map((v) => ({
+      verseId: null,          // bani lines have their own id space, not verses
       gurmukhi: v.gurmukhi,
       translit: v.translit_en,
       en: v.translation_en,
@@ -339,14 +374,17 @@ function normaliseBani(d) {
 
 function normaliseShabad(d) {
   const s = d.shabad || {};
+  // The ang is what a reader actually uses to find their place again, so it
+  // is the title. The raag was previously the navigation title, the heading
+  // and half the subtitle - the same words three times over.
   return {
-    title: s.writer || s.raag || "Shabad",
+    title: s.page_no ? `Ang ${s.page_no}` : "Shabad",
     gurTitle: null,
-    subtitle: [s.raag, s.page_no ? `Ang ${s.page_no}` : null]
-      .filter(Boolean).join(" · "),
+    subtitle: [s.writer, s.raag].filter(Boolean).join(" · ") || null,
     lines: (d.verses || []).map((v) => {
       const t = v.translation || {};
       return {
+        verseId: v.verse_id,
         gurmukhi: v.gurmukhi,
         translit: v.translit_en,
         en: t.en?.bdb || t.en?.ssk || null,

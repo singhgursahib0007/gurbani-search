@@ -55,7 +55,16 @@
   scroll-margin-top: 96px;
 }
 .line + .line { border-top: 0.5px solid var(--separator); }
-.line.is-active { background: var(--gold-quiet); }
+/* The one line the reader came here for, marked so it can be found at a
+   glance. Applied only when arriving from a search - never by tapping. */
+.line.is-focus {
+  background: var(--gold-quiet);
+  box-shadow: inset 3px 0 0 var(--gold);
+  padding-left: var(--s-4);
+  padding-right: var(--s-3);
+  margin-left: calc(var(--s-4) * -1);
+  margin-right: calc(var(--s-3) * -1);
+}
 
 .line .gur {
   font-size: calc(1.5rem * var(--reader-scale));
