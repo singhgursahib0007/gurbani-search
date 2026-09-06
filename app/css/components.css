@@ -75,9 +75,23 @@
   transition: color var(--dur-fast) var(--ease);
 }
 .tab svg { width: 25px; height: 25px; }
-.tab span { font-size: 10px; font-weight: 500; letter-spacing: 0; }
-.tab[aria-selected="true"] { color: var(--accent); }
-.tab:active svg { transform: scale(0.88); transition: transform 100ms var(--ease); }
+.tab .tab-label { font-size: 10px; font-weight: 500; letter-spacing: 0; }
+
+/* The selected tab is gold, not navy: it is the one piece of chrome that is
+   always on screen, and a warm accent against the navy reads as considered
+   rather than merely functional. The soft pill behind the icon carries the
+   colour at a size where it can be seen, so the 10px label does not have to. */
+.tab .tab-ico {
+  display: flex; align-items: center; justify-content: center;
+  width: 46px; height: 28px;
+  border-radius: var(--r-full);
+  transition: background var(--dur-fast) var(--ease),
+              transform var(--dur-fast) var(--ease);
+}
+.tab[aria-selected="true"] { color: var(--tab-active); }
+.tab[aria-selected="true"] .tab-ico { background: var(--tab-active-soft); }
+.tab[aria-selected="true"] .tab-label { font-weight: 600; }
+.tab:active .tab-ico { transform: scale(0.9); }
 
 /* --------------------------------------------------- inset list --------- */
 .list {
