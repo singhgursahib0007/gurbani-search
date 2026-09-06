@@ -138,8 +138,15 @@ a { color: var(--accent); text-decoration: none; }
 }
 
 /* --- app frame --------------------------------------------------------- */
+/* The app owns exactly one viewport and never grows past it, so scrolling
+   happens inside a pane rather than on the document. That is what lets the
+   navigation bar know it has been scrolled - and so collapse its large title
+   - and it keeps the tab bar and keyboard pinned instead of drifting with the
+   page. min-height alone let #app grow to its content, the body scrolled
+   instead, and the pane's scroll handler never fired at all. */
 #app {
-  min-height: 100dvh;
+  height: 100dvh;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
 }
@@ -152,7 +159,8 @@ a { color: var(--accent); text-decoration: none; }
 }
 
 .scroll {
-  flex: 1;
+  flex: 1 1 0;
+  min-height: 0;      /* without this a flex child will not shrink to scroll */
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
