@@ -50,6 +50,15 @@ def _db() -> sqlite3.Connection:
     return conn
 
 
+def _glob_escape(text: str) -> str:
+    """Neutralise GLOB's wildcards. The Gurmukhi alphabet contains none of
+    these, but a query can arrive from anywhere."""
+    out = []
+    for ch in text:
+        out.append(f"[{ch}]" if ch in "*?[]" else ch)
+    return "".join(out)
+
+
 def _fts_escape(text: str) -> str:
     """Quote each term so user punctuation cannot break FTS5 syntax.
 
@@ -131,18 +140,27 @@ class Api:
             if not key:
                 return {"mode": mode, "query": q, "count": 0, "results": [],
                         "note": "no Gurmukhi letters in that query"}
+            # GLOB, not LIKE. SQLite's LIKE is case-insensitive for ASCII,
+            # but in the legacy Gurmukhi encoding case *is* the letter:
+            # j is ਜ and J is ਝ, k is ਕ and K is ਖ. Matching case-insensitively
+            # silently returns lines that begin with different letters
+            # altogether. GLOB compares byte for byte, which is what BaniDB
+            # itself does with LIKE BINARY.
             if mode == "main-letters":
-                where.append("v.main_letters LIKE ?")
-                params.append(f"%{q}%")
+                where.append("v.main_letters GLOB ?")
+                params.append(f"*{_glob_escape(q)}*")
             else:
-                pattern = f"{key}%" if mode == "first-letters" else f"%{key}%"
-                where.append("v.first_letters_ascii LIKE ?")
+                esc = _glob_escape(key)
+                pattern = f"{esc}*" if mode == "first-letters" else f"*{esc}*"
+                where.append("v.first_letters_ascii GLOB ?")
                 params.append(pattern)
             note = f"letters: {key}"
 
         elif mode == "gurmukhi":
-            where.append("(v.gurmukhi LIKE ? OR v.gurmukhi_ascii LIKE ?)")
-            params += [f"%{q}%", f"%{q}%"]
+            # Same reasoning: the ASCII column is case-significant.
+            g = _glob_escape(q)
+            where.append("(v.gurmukhi GLOB ? OR v.gurmukhi_ascii GLOB ?)")
+            params += [f"*{g}*", f"*{g}*"]
 
         elif mode in ("english", "romanized"):
             col = "translation_en" if mode == "english" else "translit_en"
@@ -289,6 +307,16 @@ class Handler(BaseHTTPRequestHandler):
             if path in ("/", "/index.html"):
                 html = (APP_DIR / "index.html").read_bytes()
                 return self._send(html, ctype="text/html")
+
+            # The UI is split into CSS and ES modules, so serve those too.
+            if re.fullmatch(r"/(css|js|fonts)/[\w./-]+", path) and ".." not in path:
+                asset = (APP_DIR / path.lstrip("/")).resolve()
+                if asset.is_file() and APP_DIR in asset.parents:
+                    kind = {"css": "text/css",
+                            "js": "text/javascript",
+                            "fonts": "font/woff2"}[path.split("/")[1]]
+                    return self._send(asset.read_bytes(), ctype=kind)
+                return self._send({"error": "not found"}, 404)
 
             if path == "/api/meta":
                 return self._send(self.api.meta())

@@ -1,0 +1,171 @@
+/* ===========================================================================
+   Reset and typography.
+
+   Type is Apple's system stack: SF Pro on Apple devices, and a graceful
+   fallback everywhere else. Gurmukhi gets its own stack, because the system
+   Latin face has no Gurmukhi coverage and the browser's fallback is usually
+   ugly.
+   =========================================================================== */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  margin: 0;
+  background: var(--bg-grouped);
+  color: var(--label);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
+               "Segoe UI", Roboto, "Helvetica Neue", Inter, system-ui, sans-serif;
+  font-size: var(--t-body);
+  line-height: 1.45;
+  letter-spacing: -0.01em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior-y: none;
+  transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+
+/* Gurmukhi faces.
+ *
+ * Four are offered because Gurbani is read very differently by different
+ * people, and the right letterform is a matter of eye and habit rather than
+ * of correctness. Sant Lipi is the default: it is built specifically for
+ * Gurbani by the Shabad OS project, draws ੴ as one flowing Ik Onkar rather
+ * than a digit and a detached hook, and places the matras Gurbani leans on
+ * without crowding them.
+ *
+ * Each face is its own family, so a browser downloads only the one actually
+ * in use - picking a font costs 12-33 KB, and picking none costs nothing.
+ * Three of the four are variable, so weight is real rather than synthesised.
+ */
+@font-face {
+  font-family: "Sant Lipi";
+  src: url("../fonts/SantLipi.woff2") format("woff2-variations"),
+       url("../fonts/SantLipi.woff2") format("woff2");
+  font-weight: 100 900; font-display: swap;
+  unicode-range: U+0A00-0A7F, U+0964-0965, U+200C-200D, U+25CC;
+}
+@font-face {
+  font-family: "Mukta Mahee"; src: url("../fonts/MuktaMahee.woff2") format("woff2");
+  font-weight: 400; font-display: swap;
+  unicode-range: U+0A00-0A7F, U+0964-0965, U+200C-200D, U+25CC;
+}
+@font-face {
+  font-family: "Mukta Mahee"; src: url("../fonts/MuktaMahee-700.woff2") format("woff2");
+  font-weight: 700; font-display: swap;
+  unicode-range: U+0A00-0A7F, U+0964-0965, U+200C-200D, U+25CC;
+}
+@font-face {
+  font-family: "Noto Sans Gurmukhi";
+  src: url("../fonts/NotoSansGurmukhi.woff2") format("woff2-variations"),
+       url("../fonts/NotoSansGurmukhi.woff2") format("woff2");
+  font-weight: 100 900; font-display: swap;
+  unicode-range: U+0A00-0A7F, U+0964-0965, U+200C-200D, U+25CC;
+}
+@font-face {
+  font-family: "Anek Gurmukhi";
+  src: url("../fonts/AnekGurmukhi.woff2") format("woff2-variations"),
+       url("../fonts/AnekGurmukhi.woff2") format("woff2");
+  font-weight: 100 900; font-display: swap;
+  unicode-range: U+0A00-0A7F, U+0964-0965, U+200C-200D, U+25CC;
+}
+
+/* The chosen face and weight arrive as variables set from preferences. */
+.gur {
+  font-family: var(--gur-font, "Sant Lipi"), "Gurmukhi MN", "Gurmukhi Sangam MN",
+               "Noto Sans Gurmukhi", "Nirmala UI", "Raavi", sans-serif;
+  font-weight: var(--gur-weight, 400);
+  color: var(--gurbani);
+  line-height: 1.85;
+  letter-spacing: 0;
+  font-feature-settings: "kern" 1;
+}
+
+h1, h2, h3, h4 { margin: 0; font-weight: 700; letter-spacing: -0.022em; }
+p { margin: 0; }
+
+button, input, select, textarea {
+  font: inherit;
+  color: inherit;
+  margin: 0;
+}
+button {
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+}
+a { color: var(--accent); text-decoration: none; }
+
+:focus-visible {
+  outline: 2.5px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--r-sm);
+}
+:focus:not(:focus-visible) { outline: none; }
+
+::-webkit-scrollbar { width: 0; height: 0; }
+
+[hidden] { display: none !important; }
+
+/* --- type helpers ------------------------------------------------------ */
+.t-large-title { font-size: var(--t-large-title); font-weight: 700; letter-spacing: -0.03em; }
+.t-title-2 { font-size: var(--t-title-2); font-weight: 700; letter-spacing: -0.02em; }
+.t-title-3 { font-size: var(--t-title-3); font-weight: 600; letter-spacing: -0.02em; }
+.t-headline { font-size: var(--t-headline); font-weight: 600; letter-spacing: -0.015em; }
+.t-body { font-size: var(--t-body); }
+.t-subhead { font-size: var(--t-subhead); }
+.t-footnote { font-size: var(--t-footnote); }
+.t-caption { font-size: var(--t-caption); }
+.dim  { color: var(--label-2); }
+.dim2 { color: var(--label-3); }
+.gold { color: var(--gold); }
+
+/* A small uppercase label, the way iOS titles a grouped list section. */
+.section-label {
+  font-size: var(--t-footnote);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--label-3);
+  padding: 0 var(--s-5) var(--s-2);
+}
+
+/* --- app frame --------------------------------------------------------- */
+#app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+.screen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.scroll {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+}
+
+/* Bottom padding so content clears the tab bar and the home indicator. */
+.pad-tabbar { padding-bottom: calc(var(--s-12) + 42px + env(safe-area-inset-bottom)); }
+
+.container { max-width: 46rem; margin: 0 auto; width: 100%; }
+
+/* --- entrance animation ------------------------------------------------ */
+@keyframes rise {
+  from { opacity: 0; transform: translate3d(0, 10px, 0); }
+  to   { opacity: 1; transform: none; }
+}
+.rise { animation: rise var(--dur) var(--ease-out) both; }

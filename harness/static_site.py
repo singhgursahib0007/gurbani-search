@@ -103,6 +103,18 @@ def build_static(out_dir: Path | None = None, include_text: bool = True,
         marker,
         '<script>window.GURBANI_STATIC = {base: "data/"};</script>')
     (out / "index.html").write_text(html, encoding="utf-8")
+
+    # The stylesheets and ES modules ship as they are - no bundling, so what
+    # runs in production is the same source you edit.
+    for folder in ("css", "js", "fonts"):
+        src = config.ROOT / "app" / folder
+        dst = out / folder
+        if dst.exists():
+            shutil.rmtree(dst)
+        shutil.copytree(src, dst, ignore=shutil.ignore_patterns("__pycache__"))
+    n_assets = sum(1 for f in ("css", "js", "fonts")
+                   for _ in (out / f).rglob("*"))
+    print(f"  css + js + fonts     {n_assets} files")
     # Tell GitHub Pages not to run Jekyll over 13,000 JSON files.
     (out / ".nojekyll").write_text("")
 
@@ -132,8 +144,15 @@ def build_static(out_dir: Path | None = None, include_text: bool = True,
                 str(r["line_no"] or 0), str(r["writer_id"] or 0),
                 str(r["raag_id"] or 0), _clean(r["first_letters_ascii"]),
                 _clean(r["gurmukhi"]))) + "\n")
-    print(f"  lines.tsv            {(data / 'lines.tsv').stat().st_size / 1e6:,.1f} MB "
-          f"({len(rows):,} lines)")
+    index_bytes = (data / "lines.tsv").stat().st_size
+    print(f"  lines.tsv            {index_bytes / 1e6:,.1f} MB ({len(rows):,} lines)")
+
+    # Re-write meta with the index size, so the loading bar is honest rather
+    # than a guess (gzip hides the real length from Content-Length).
+    meta["index_bytes"] = index_bytes
+    (data / "meta.json").write_text(
+        json.dumps(meta, ensure_ascii=False, separators=(",", ":")),
+        encoding="utf-8")
 
     # -- 4. English tier, loaded only on demand ---------------------------
     if include_text:

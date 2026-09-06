@@ -1,0 +1,175 @@
+/* ===========================================================================
+   Design tokens.
+
+   One palette - white, navy, gold - expressed as four reading themes. Every
+   colour in the app resolves through these variables, so a theme change is a
+   single attribute on <html> and nothing else in the codebase knows about it.
+
+   Themes: light · sepia · dark · night   (plus "auto", resolved in JS)
+   =========================================================================== */
+
+:root {
+  /* --- brand ---------------------------------------------------------- */
+  --navy-900: #0B1A33;
+  --navy-800: #12294B;
+  --navy-700: #1B3A6B;
+  --navy-600: #24518F;
+  --navy-300: #7FA8E8;
+  --navy-100: #E7EEF9;
+
+  --gold-700: #96701E;
+  --gold-600: #B8892B;
+  --gold-500: #C9A227;
+  --gold-400: #DDBB55;
+  --gold-300: #E8C46A;
+  --gold-100: #FBF3DF;
+
+  /* --- type scale (Apple's, in rem) ------------------------------------ */
+  --t-large-title: 2.125rem;  /* 34 */
+  --t-title-1:     1.75rem;   /* 28 */
+  --t-title-2:     1.375rem;  /* 22 */
+  --t-title-3:     1.25rem;   /* 20 */
+  --t-headline:    1.0625rem; /* 17 semibold */
+  --t-body:        1.0625rem; /* 17 */
+  --t-callout:     1rem;      /* 16 */
+  --t-subhead:     0.9375rem; /* 15 */
+  --t-footnote:    0.8125rem; /* 13 */
+  --t-caption:     0.75rem;   /* 12 */
+  --t-caption-2:   0.6875rem; /* 11 */
+
+  /* --- 8pt spacing grid ------------------------------------------------ */
+  --s-1: 4px;  --s-2: 8px;  --s-3: 12px; --s-4: 16px;
+  --s-5: 20px; --s-6: 24px; --s-8: 32px; --s-10: 40px; --s-12: 48px;
+
+  /* --- radii (continuous-corner feel) ---------------------------------- */
+  --r-sm: 8px; --r-md: 12px; --r-lg: 16px; --r-xl: 20px; --r-2xl: 26px;
+  --r-full: 999px;
+
+  /* --- motion: Apple's standard ease ----------------------------------- */
+  --ease: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-fast: 180ms;
+  --dur: 320ms;
+  --dur-slow: 480ms;
+
+  /* --- reader (overridden by user preference) -------------------------- */
+  --reader-scale: 1;
+  --reader-align: right;
+  --reader-measure: 40rem;
+
+  --tap: 44px;              /* Apple's minimum touch target */
+  --tabbar-h: 56px;         /* icon + label; safe-area is added separately */
+}
+
+/* --- Light: the default ------------------------------------------------ */
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+  --bg:            #FFFFFF;
+  --bg-grouped:    #F4F6FA;
+  --bg-elevated:   #FFFFFF;
+  --bg-sunken:     #EDF1F7;
+  --fill:          rgba(18, 41, 75, 0.06);
+  --fill-strong:   rgba(18, 41, 75, 0.10);
+  --separator:     rgba(18, 41, 75, 0.12);
+  --separator-opaque: #E3E8F0;
+
+  --label:         #0B1A33;
+  --label-2:       rgba(11, 26, 51, 0.58);
+  --label-3:       rgba(11, 26, 51, 0.36);
+
+  --accent:        var(--navy-700);
+  --accent-quiet:  var(--navy-100);
+  --gold:          var(--gold-600);
+  --gold-quiet:    var(--gold-100);
+
+  --gurbani:       #12294B;
+  --shadow-1: 0 1px 2px rgba(11, 26, 51, .05), 0 4px 16px rgba(11, 26, 51, .06);
+  --shadow-2: 0 2px 6px rgba(11, 26, 51, .07), 0 16px 40px rgba(11, 26, 51, .12);
+  --blur-bg: rgba(255, 255, 255, 0.78);
+}
+
+/* --- Sepia: warm paper, for long reading ------------------------------- */
+[data-theme="sepia"] {
+  color-scheme: light;
+  --bg:            #FBF4E6;
+  --bg-grouped:    #F3EAD8;
+  --bg-elevated:   #FFFAF0;
+  --bg-sunken:     #EFE4CE;
+  --fill:          rgba(78, 58, 26, 0.07);
+  --fill-strong:   rgba(78, 58, 26, 0.12);
+  --separator:     rgba(78, 58, 26, 0.15);
+  --separator-opaque: #E4D7BC;
+
+  --label:         #3B2E1B;
+  --label-2:       rgba(59, 46, 27, 0.62);
+  --label-3:       rgba(59, 46, 27, 0.40);
+
+  --accent:        #7A5A1F;
+  --accent-quiet:  #F0E3C8;
+  --gold:          var(--gold-700);
+  --gold-quiet:    #F5E9CE;
+
+  --gurbani:       #33260F;
+  --shadow-1: 0 1px 2px rgba(78, 58, 26, .06), 0 4px 16px rgba(78, 58, 26, .07);
+  --shadow-2: 0 2px 6px rgba(78, 58, 26, .08), 0 16px 40px rgba(78, 58, 26, .14);
+  --blur-bg: rgba(251, 244, 230, 0.80);
+}
+
+/* --- Dark: navy-tinted, not flat grey ---------------------------------- */
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg:            #0C1524;
+  --bg-grouped:    #070E19;
+  --bg-elevated:   #141F33;
+  --bg-sunken:     #050A12;
+  --fill:          rgba(255, 255, 255, 0.07);
+  --fill-strong:   rgba(255, 255, 255, 0.13);
+  --separator:     rgba(255, 255, 255, 0.11);
+  --separator-opaque: #1E2B42;
+
+  --label:         #EEF3FA;
+  --label-2:       rgba(238, 243, 250, 0.62);
+  --label-3:       rgba(238, 243, 250, 0.38);
+
+  --accent:        var(--navy-300);
+  --accent-quiet:  rgba(127, 168, 232, 0.16);
+  --gold:          var(--gold-300);
+  --gold-quiet:    rgba(232, 196, 106, 0.14);
+
+  --gurbani:       #E8EFFA;
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, .4), 0 4px 16px rgba(0, 0, 0, .3);
+  --shadow-2: 0 2px 6px rgba(0, 0, 0, .5), 0 16px 40px rgba(0, 0, 0, .45);
+  --blur-bg: rgba(12, 21, 36, 0.76);
+}
+
+/* --- Night: true black, for the dark of the morning -------------------- */
+[data-theme="night"] {
+  color-scheme: dark;
+  --bg:            #000000;
+  --bg-grouped:    #000000;
+  --bg-elevated:   #0B0F16;
+  --bg-sunken:     #000000;
+  --fill:          rgba(255, 255, 255, 0.06);
+  --fill-strong:   rgba(255, 255, 255, 0.11);
+  --separator:     rgba(255, 255, 255, 0.09);
+  --separator-opaque: #161C26;
+
+  --label:         #C8D2E0;
+  --label-2:       rgba(200, 210, 224, 0.55);
+  --label-3:       rgba(200, 210, 224, 0.32);
+
+  --accent:        #6E93D0;
+  --accent-quiet:  rgba(110, 147, 208, 0.14);
+  --gold:          #C9A85E;
+  --gold-quiet:    rgba(201, 168, 94, 0.12);
+
+  --gurbani:       #CBD7E8;
+  --shadow-1: none;
+  --shadow-2: 0 2px 6px rgba(0, 0, 0, .7), 0 16px 40px rgba(0, 0, 0, .6);
+  --blur-bg: rgba(0, 0, 0, 0.72);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --dur-fast: 0ms; --dur: 0ms; --dur-slow: 0ms; }
+}

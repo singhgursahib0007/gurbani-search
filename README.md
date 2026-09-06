@@ -147,6 +147,38 @@ python3 -m harness stats                       # corpus summary
 python3 -m harness serve --port 8080           # the UI
 ```
 
+## The app
+
+The interface is mobile-first and built from the iOS vocabulary: a tab bar,
+inset grouped lists, sheets you can drag away, and a navigation title that
+shrinks as you scroll. English is set in the system face (SF Pro on Apple
+devices); Gurmukhi is set in **Sant Lipi**, a Unicode face built for Gurbani,
+with Mukta Mahee, Noto Sans and Anek offered as alternatives.
+
+Four screens: **Banis** (starred ones first, then the catalogue), **Search**,
+**Saved**, and **Settings**. Tapping a bani or a search result opens the
+reader, where the chrome hides as you scroll and everything a reader might
+reach for lives in one sheet - theme, Gurmukhi face and weight, separate
+sizes for Gurbani, transliteration and translation, alignment, larivaar,
+which translations to show, and auto-scroll with an adjustable speed. Every
+preference is stored on the device and there is a reset for each half of it.
+
+`app/` is plain ES modules with no build step, so what runs in production is
+the source you edit:
+
+```
+app/
+  index.html          the shell
+  css/                tokens (themes) · base · components · search · reader
+  js/
+    store.js          preferences and saved items, mirrored to localStorage
+    data.js           one search interface over the API or the static index
+    gurmukhi.js       the letter layer and the keyboard
+    ui.js             el(), sheets, switches, segmented controls, sliders
+    icons.js          Phosphor icons, inlined
+    views/            banis · search · saved · settings · reader · typography
+```
+
 ## Publishing it as a website
 
 `serve` is for your own machine. To share it, build a version with no server
