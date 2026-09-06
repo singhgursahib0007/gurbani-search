@@ -1,0 +1,9 @@
+# The corpus is rebuilt by the harness, not stored in git.
+data/raw/
+data/processed/
+data/exports/
+__pycache__/
+*.pyc
+
+# The generated site is published to the gh-pages branch, not tracked on main.
+site/
