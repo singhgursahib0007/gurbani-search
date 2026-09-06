@@ -128,7 +128,10 @@
   box-shadow: var(--shadow-2);
   font-size: var(--t-subhead); font-weight: 600;
 }
-.speed-pill input { width: 8rem; }
+/* Wide enough that a small drag is a small change - at 8rem the whole
+   usable range was about a thumb's width. */
+.speed-pill input { width: min(56vw, 15rem); }
+.speed-pill { padding: var(--s-2) var(--s-5); }
 
 @media (min-width: 43rem) {
   .reader-inner { padding-left: var(--s-8); padding-right: var(--s-8); }

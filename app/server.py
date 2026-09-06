@@ -309,6 +309,13 @@ class Handler(BaseHTTPRequestHandler):
                 return self._send(html, ctype="text/html")
 
             # The UI is split into CSS and ES modules, so serve those too.
+            if path == "/sw.js":
+                f = APP_DIR / "sw.js"
+                if f.is_file():
+                    body = f.read_bytes().replace(b"__BUILD__", b"dev")
+                    return self._send(body, ctype="text/javascript")
+                return self._send({"error": "not found"}, 404)
+
             if path in ("/icon.svg", "/khanda.svg", "/manifest.webmanifest"):
                 f = APP_DIR / path.lstrip("/")
                 kind = ("image/svg+xml" if path.endswith(".svg")

@@ -114,6 +114,13 @@ def build_static(out_dir: Path | None = None, include_text: bool = True,
         shutil.copytree(src, dst, ignore=shutil.ignore_patterns("__pycache__"))
     for single in ("icon.svg", "khanda.svg", "manifest.webmanifest"):
         shutil.copy2(config.ROOT / "app" / single, out / single)
+
+    # The service worker carries a build stamp, so a new deployment lands in a
+    # fresh cache and the previous one is dropped on activate.
+    build_id = time.strftime("%Y%m%d-%H%M%S", time.gmtime())
+    sw = (config.ROOT / "app" / "sw.js").read_text(encoding="utf-8")
+    (out / "sw.js").write_text(sw.replace("__BUILD__", build_id), encoding="utf-8")
+    print(f"  sw.js                build {build_id}")
     n_assets = sum(1 for f in ("css", "js", "fonts", "icons")
                    for _ in (out / f).rglob("*")) + 3
     print(f"  css + js + fonts + icons  {n_assets} files")

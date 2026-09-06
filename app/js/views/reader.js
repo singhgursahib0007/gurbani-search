@@ -173,8 +173,10 @@ export function readerView({ type, id }, { onBack }) {
       if (!auto) return;
       const dt = Math.min(64, t - lastT);
       lastT = t;
-      // speed 10‒100 maps to roughly 6‒95 px per second
-      const pxPerSec = 5 + (store.get("autoScrollSpeed") / 100) * 90;
+      // Maps the 5‒100 slider onto 9.5‒119 px per second. The slow end is
+      // unchanged - it was right for reading along - while the top end is
+      // about a quarter faster, for skimming to a remembered line.
+      const pxPerSec = 3.75 + 1.15 * store.get("autoScrollSpeed");
       carry += (pxPerSec * dt) / 1000;
       const whole = Math.floor(carry);
       if (whole >= 1) {

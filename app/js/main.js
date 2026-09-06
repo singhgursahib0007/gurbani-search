@@ -164,6 +164,17 @@ route();
   setTimeout(hide, MAX_MS + 100);   // belt and braces
 })();
 
+/* Register the service worker so the app opens and reads with no network.
+ * Failure here is not worth surfacing: the app works fine online without it. */
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  const register = () => navigator.serviceWorker.register("./sw.js").catch(() => {});
+  // Modules are deferred, so "load" may already have fired by the time this
+  // runs - in which case the listener would never call back and the app would
+  // silently never go offline-capable.
+  if (document.readyState === "complete") register();
+  else window.addEventListener("load", register);
+}
+
 /* Keep the status-bar colour in step when the system flips light/dark. */
 store.subscribe((_s, keys) => {
   if (keys === "*" || keys.includes("theme")) applyTheme();
