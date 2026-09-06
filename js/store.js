@@ -36,6 +36,7 @@ export const DEFAULTS = Object.freeze({
   favourites: [],            // bani ids, in the order the reader starred them
   saved: [],                 // saved shabads: {id, gurmukhi, at}
   lastRead: null,            // {type:'bani'|'shabad', id, title, at}
+  progress: {},              // "bani:2" -> { line, at } — see setProgress
 });
 
 let state = load();
@@ -116,11 +117,34 @@ export const store = {
     return !exists;
   },
 
+  /* --- reading position ------------------------------------------------ */
+  //
+  // Stored as the index of the topmost visible line, not a pixel offset. A
+  // scroll position in pixels is meaningless the moment the reader changes
+  // type size, turns a translation on, or switches font - all of which reflow
+  // the page. A line index survives every one of those.
+  getProgress(key) { return state.progress?.[key] || null; },
+
+  setProgress(key, line) {
+    const current = state.progress?.[key];
+    if (current && current.line === line) return;
+    const next = { ...state.progress, [key]: { line, at: Date.now() } };
+
+    // Keep this from growing without bound: only the fifty most recently
+    // read items are worth remembering.
+    const keys = Object.keys(next);
+    if (keys.length > 50) {
+      keys.sort((a, b) => (next[b].at || 0) - (next[a].at || 0));
+      for (const k of keys.slice(50)) delete next[k];
+    }
+    this.set("progress", next);
+  },
+
   /* --- housekeeping ---------------------------------------------------- */
   reset() {
     // Deliberately keeps what the reader collected; only the knobs go back.
-    const { favourites, saved, lastRead } = state;
-    state = { ...DEFAULTS, favourites, saved, lastRead };
+    const { favourites, saved, lastRead, progress } = state;
+    state = { ...DEFAULTS, favourites, saved, lastRead, progress };
     persist();
     emit("*");
   },
