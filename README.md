@@ -92,6 +92,17 @@ site/        the publishable static build
 `data/raw` is the source of truth. `build` is a pure function of it: delete the
 database, rebuild, and you get the same bytes back, offline.
 
+## The desktop app
+
+The same corpus, designed from a desktop-first perspective — three panes, a
+sidebar, keyboard-driven, with an immersive full-screen reading mode:
+
+**→ [singhgursahib0007.github.io/gurbani-studio](https://singhgursahib0007.github.io/gurbani-studio/)**
+
+Source: [gurbani-studio](https://github.com/singhgursahib0007/gurbani-studio).
+It is standalone — its own pipeline, app and documentation — and shares only
+the lineage of the harness and the script layer.
+
 ## A note on the texts
 
 This is scripture. The harness never rewrites, "corrects" or normalises the
