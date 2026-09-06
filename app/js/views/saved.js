@@ -62,12 +62,12 @@ export function savedView({ onOpen }) {
 
     if (shabads.length) {
       inner.append(el("div.section-label", { text: "Shabads" }));
-      inner.append(el("div.list", {}, shabads.map((it) => row(it, "bookFill"))));
+      shabads.forEach((it) => inner.append(shabadCard(it)));
     }
 
     if (banis.length) {
       inner.append(el("div.section-label", { text: "Banis" }));
-      inner.append(el("div.list", {}, banis.map((it) => row(it, "bookFill"))));
+      inner.append(el("div.list", {}, banis.map(baniRow)));
     }
 
     scroll.append(inner);
@@ -90,18 +90,37 @@ export function savedView({ onOpen }) {
     ].filter(Boolean));
   }
 
-  function row(it, iconName) {
-    return el("button.row", { onclick: () => { tap(); onOpen(it); } }, [
-      el("div.row-icon.is-gold", { html: Icons[iconName] }),
-      el("div.row-body", {}, [
-        it.gurmukhi
-          ? el("div.row-title.gur", {
-              text: it.title || it.gurmukhi,
-              style: { fontSize: "1.1rem" },
-            })
-          : el("div.row-title", { text: it.title || "" }),
-        el("div.row-sub", { text: it.subtitle || it.gurmukhi || "" }),
+  /* A kept shabad is shown by its line, not by its ang.
+     "Ang 681" is where it lives, not what it is - and the raag heading it
+     used to show opens hundreds of shabads. The line the reader searched for
+     is the only part they will recognise, so that is the heading, and the
+     reference goes underneath. */
+  function shabadCard(it) {
+    const where = [it.title, it.subtitle].filter(Boolean).join(" · ");
+    return el("button.saved-line.is-shabad", {
+      onclick: () => { tap(); onOpen(it); },
+    }, [
+      el("div.gur", { text: it.gurmukhi || it.title || "" }),
+      where && el("div.where", {}, [
+        el("span", { html: Icons.bookFill, style: { display: "inline-flex" } }),
+        el("span", { text: where }),
       ]),
+      el("span.drop", {
+        html: Icons.xmark, role: "button", "aria-label": "Remove",
+        onclick: (e) => { e.stopPropagation(); remove(it); },
+      }),
+    ].filter(Boolean));
+  }
+
+  function baniRow(it) {
+    return el("button.row", { onclick: () => { tap(); onOpen(it); } }, [
+      el("div.row-icon.is-gold", { html: Icons.bookFill }),
+      el("div.row-body", {}, [
+        el("div.row-title.gur", {
+          text: it.title || "", style: { fontSize: "1.1rem" },
+        }),
+        it.subtitle && el("div.row-sub", { text: it.subtitle }),
+      ].filter(Boolean)),
       el("span.icon-btn.plain", {
         html: Icons.xmark, role: "button", "aria-label": "Remove",
         onclick: (e) => { e.stopPropagation(); remove(it); },

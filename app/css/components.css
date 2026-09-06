@@ -394,3 +394,13 @@
 .btn-primary:active { transform: scale(0.98); filter: brightness(0.95); }
 .btn-secondary { background: var(--fill); color: var(--label); }
 .btn-secondary:active { background: var(--fill-strong); transform: scale(0.98); }
+
+/* A kept shabad: same card as a kept line, but ruled in the interface accent
+   rather than gold, so the two are told apart at a glance. */
+.saved-line.is-shabad {
+  box-shadow: inset 3px 0 0 var(--accent), var(--shadow-1);
+}
+.saved-line .where {
+  display: flex; align-items: center; gap: 6px;
+}
+.saved-line .where svg { width: 13px; height: 13px; opacity: .8; }
