@@ -48,6 +48,7 @@
 /* --- a line of Gurbani -------------------------------------------------- */
 .line {
   padding: var(--s-4) 0;
+  transition: padding var(--dur-fast) var(--ease);
   border-bottom: 0.5px solid transparent;
   text-align: var(--reader-align);
   transition: background var(--dur-fast) var(--ease);
@@ -55,6 +56,15 @@
   scroll-margin-top: 96px;
 }
 .line + .line { border-top: 0.5px solid var(--separator); }
+
+/* A line showing only Gurmukhi needs far less room than one carrying a
+   transliteration and two translations. Tightened up, and the rules between
+   consecutive bare lines are dropped as well - with nothing between them to
+   separate, a rule under every line is just clutter, and the verse reads as
+   continuous text the way it does on a page. */
+.line.is-bare { padding: var(--s-2) 0; }
+.line.is-bare + .line.is-bare { border-top-color: transparent; }
+.line.is-bare .gur { line-height: 1.75; }
 /* The one line the reader came here for, marked so it can be found at a
    glance. Applied only when arriving from a search - never by tapping. */
 .line.is-focus {

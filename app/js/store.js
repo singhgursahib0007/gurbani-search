@@ -11,14 +11,19 @@
 
 const KEY = "gurbani.v1";
 
+// Bumped when a default changes in a way existing readers should inherit.
+// See the migration in load().
+const PREFS_VERSION = 2;
+
 export const DEFAULTS = Object.freeze({
+  prefsVersion: PREFS_VERSION,
   theme: "auto",             // auto | light | sepia | dark | night
   gurFont: "Sant Lipi",      // see FONTS below
   gurWeight: 400,            // 400 regular · 500 medium · 700 bold
   textScale: 1,              // Gurbani line, 0.85 – 1.7
   translitScale: 1,          // transliteration
   translationScale: 1,       // translations
-  align: "start",            // start | center
+  align: "center",           // start | center
   larivaar: false,
   transliteration: true,
   translationEn: true,       // BaniDB English
@@ -42,7 +47,19 @@ function load() {
     const saved = JSON.parse(raw);
     // Merge over defaults so a new preference added in a later version
     // appears with its default instead of undefined.
-    return { ...DEFAULTS, ...saved };
+    const merged = { ...DEFAULTS, ...saved };
+
+    // Centred is now the default alignment. Anyone still carrying the old
+    // default gets moved across once; a reader who deliberately chose
+    // "start" after this version keeps it, because the version stamp will
+    // already have been written.
+    if ((saved.prefsVersion || 1) < 2) {
+      if (saved.align === undefined || saved.align === "start") {
+        merged.align = "center";
+      }
+      merged.prefsVersion = PREFS_VERSION;
+    }
+    return merged;
   } catch {
     return { ...DEFAULTS };
   }
