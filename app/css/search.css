@@ -136,3 +136,55 @@
   .kb-grid { max-width: 34rem; margin: 0 auto; }
   .result { max-width: 44rem; margin-left: auto; margin-right: auto; }
 }
+
+/* --- the opening screen ------------------------------------------------ */
+.intro {
+  display: flex; flex-direction: column; align-items: center;
+  gap: var(--s-2); padding: var(--s-8) var(--s-5) var(--s-6);
+  text-align: center;
+}
+.intro-icon { color: var(--label-3); }
+.intro-icon svg { width: 40px; height: 40px; }
+.intro h3 { font-size: var(--t-title-3); color: var(--label); }
+.intro p {
+  font-size: var(--t-subhead); color: var(--label-2);
+  max-width: 20rem; line-height: 1.5;
+}
+
+.eg {
+  margin-top: var(--s-5);
+  width: 100%; max-width: 24rem;
+  padding: var(--s-4) var(--s-4) var(--s-5);
+  background: var(--bg-elevated);
+  border: 0.5px solid var(--separator);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-1);
+}
+.eg-label, .eg-hint {
+  font-size: var(--t-caption); font-weight: 600;
+  letter-spacing: 0.05em; text-transform: uppercase;
+  color: var(--label-3);
+}
+.eg-hint { margin-top: var(--s-4); }
+
+/* The example line, with the letter you would press picked out in gold. */
+.eg-line {
+  font-size: 1.3rem; line-height: 1.9;
+  margin-top: var(--s-2);
+  color: var(--label-2);
+}
+.eg-line b { color: var(--gold); font-weight: 700; }
+
+.eg-keys {
+  display: flex; align-items: center; justify-content: center;
+  gap: 6px; flex-wrap: wrap; margin-top: var(--s-2);
+}
+.eg-key {
+  min-width: 38px; height: 42px;
+  display: grid; place-items: center;
+  border-radius: var(--r-sm);
+  background: var(--gold-quiet); color: var(--gold);
+  font-size: 1.2rem; font-weight: 600;
+  border: 0.5px solid var(--separator);
+}
+.eg-arrow { color: var(--label-3); font-size: var(--t-footnote); }

@@ -25,7 +25,7 @@ const THEMES = [
   { value: "night", label: "Night", bg: "#000000", fg: "#C8D2E0" },
 ];
 
-export function readerView({ type, id, focusVerse = null }, { onBack }) {
+export function readerView({ type, id, focusLine = null }, { onBack }) {
   const root = el("div.reader");
   const scroller = el("div.reader-scroll");
   const inner = el("div.reader-inner");
@@ -110,11 +110,11 @@ export function readerView({ type, id, focusVerse = null }, { onBack }) {
       // scrolling is just noise.
       const box = el(`div.line${line.isHeader ? ".is-header" : ""}`, {
         dataset: {
-          verse: line.verseId != null ? String(line.verseId) : "",
+          key: line.key != null ? String(line.key) : "",
           i: String(line.index),
         },
       });
-      if (focusVerse != null && line.verseId === focusVerse) {
+      if (focusLine != null && line.key === focusLine) {
         box.classList.add("is-focus");
       }
 
@@ -142,13 +142,15 @@ export function readerView({ type, id, focusVerse = null }, { onBack }) {
       // space. Mark those so the CSS can close the gaps up.
       if (box.childElementCount === 1) box.classList.add("is-bare");
 
-      // Only lines with a stable verse id can be kept: bani lines are numbered
-      // in their own id space and would not resolve back to a shabad.
-      if (line.verseId == null) {
+      // Every line that can be named again can be kept. A shabad line is
+      // named by its verse id; a bani line by its position in that bani,
+      // because bani verses are numbered in their own id space and would not
+      // resolve back to a shabad.
+      if (line.key == null) {
         inner.append(box);
         return;
       }
-      if (store.isSaved(lineKey(line.verseId))) box.classList.add("is-saved");
+      if (store.isSaved(lineKey(line))) box.classList.add("is-saved");
 
       // Pull the line left to uncover a star. Press and hold is deliberately
       // left alone, so it still selects text the way it does anywhere else.
@@ -185,8 +187,8 @@ export function readerView({ type, id, focusVerse = null }, { onBack }) {
      above. */
   let revealed = false;
   function revealFocus() {
-    if (revealed || focusVerse == null) return;
-    const target = inner.querySelector(`.line[data-verse="${focusVerse}"]`);
+    if (revealed || focusLine == null) return;
+    const target = inner.querySelector(`.line[data-key="${focusLine}"]`);
     if (!target) return;
     revealed = true;
     const top = Math.max(0, target.offsetTop - Math.round(scroller.clientHeight * 0.3));
@@ -230,7 +232,7 @@ export function readerView({ type, id, focusVerse = null }, { onBack }) {
      wherever they happened to leave off. */
   let restored = false;
   function restorePosition() {
-    if (restored || focusVerse != null) return;
+    if (restored || focusLine != null) return;
     const saved = store.getProgress(progressKey);
     if (!saved || !saved.line) { restored = true; return; }
     const box = inner.querySelector(`.line[data-i="${saved.line}"]`);
@@ -345,14 +347,14 @@ export function readerView({ type, id, focusVerse = null }, { onBack }) {
     // skipping the raag-and-mehla heading, which is identical across hundreds
     // of shabads and tells you nothing about which one this is.
     const ref =
-      (focusVerse != null &&
-        record.lines.find((l) => l.verseId === focusVerse)) ||
+      (focusLine != null &&
+        record.lines.find((l) => l.key === focusLine)) ||
       record.lines.find((l) => !l.isHeader && !isHeading(l.gurmukhi)) ||
       record.lines[0];
 
     const nowSaved = store.toggleSaved({
       id: `${type}:${id}`, type, refId: id,
-      verseId: ref?.verseId ?? null,
+      verseId: ref?.key ?? null,
       title: record.gurTitle || record.title,
       subtitle: record.subtitle || null,
       gurmukhi: ref?.gurmukhi || "",
@@ -369,19 +371,24 @@ export function readerView({ type, id, focusVerse = null }, { onBack }) {
   }
 
   /* ----------------------------------------------------- line actions --- */
-  const lineKey = (verseId) => `line:${verseId}`;
+  const lineKey = (line) =>
+    type === "bani" ? `baniline:${id}:${line.key}` : `line:${line.key}`;
 
   function lineEntry(line) {
-    return {
-      id: lineKey(line.verseId),
+    const base = {
+      id: lineKey(line),
       type: "line",
-      refId: line.verseId,
-      shabadId: record?.shabadId ?? (type === "shabad" ? id : null),
       gurmukhi: line.gurmukhi,
       translit: line.translit || null,
       en: line.en || null,
-      where: record?.subtitle || record?.title || "",
     };
+    if (type === "bani") {
+      return { ...base, baniId: id, seq: line.key,
+               where: record?.title || "" };
+    }
+    return { ...base, refId: line.key,
+             shabadId: record?.shabadId ?? id,
+             where: [record?.title, record?.subtitle].filter(Boolean).join(" · ") };
   }
 
   /* A press and hold opens this rather than saving outright: it makes the
@@ -389,7 +396,7 @@ export function readerView({ type, id, focusVerse = null }, { onBack }) {
      within reach - which matters because holding a line no longer starts a
      text selection. */
   function openLineActions(line, box) {
-    const saved = store.isSaved(lineKey(line.verseId));
+    const saved = store.isSaved(lineKey(line));
 
     sheet(saved ? "Saved line" : "Save this line", (body, { close }) => {
       // The line itself, shown the way it is shown when kept, so what you are
@@ -546,8 +553,10 @@ function normaliseBani(d) {
     title: titleCase(info.english || "Bani"),
     gurTitle: info.unicode || null,
     subtitle: titleCase(info.english || "") || null,
-    lines: (d.verses || []).map((v) => ({
-      verseId: null,          // bani lines have their own id space, not verses
+    lines: (d.verses || []).map((v, i) => ({
+      // Bani verses are numbered in their own id space, so a line here is
+      // named by its position in the bani instead.
+      key: v.seq != null ? v.seq : i,
       gurmukhi: v.gurmukhi,
       translit: v.translit_en,
       en: v.translation_en,
@@ -571,7 +580,7 @@ function normaliseShabad(d) {
     lines: (d.verses || []).map((v) => {
       const t = v.translation || {};
       return {
-        verseId: v.verse_id,
+        key: v.verse_id,
         gurmukhi: v.gurmukhi,
         translit: v.translit_en,
         en: t.en?.bdb || t.en?.ssk || null,
