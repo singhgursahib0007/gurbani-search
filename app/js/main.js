@@ -119,6 +119,51 @@ function back() {
 window.addEventListener("hashchange", route);
 route();
 
+/* Dismiss the splash once the first screen is on the page.
+ *
+ * The shape here is all about not trapping anyone. `route()` has already
+ * mounted the first view synchronously by the time this runs, so the only
+ * thing worth waiting for is the Gurmukhi face - and that wait is capped,
+ * because `document.fonts.ready` is not guaranteed to settle promptly and one
+ * font swap is far better than a logo nobody can dismiss.
+ *
+ * Deliberately no requestAnimationFrame here: rAF does not fire in a
+ * background tab, so anyone opening the link in one would sit staring at the
+ * splash until the ceiling expired. A timer keeps running either way.
+ *
+ * It also holds for a short minimum, so a fast load reads as a deliberate
+ * opening rather than a flicker.
+ */
+(function dismissSplash() {
+  const splash = document.getElementById("splash");
+  if (!splash) return;
+
+  const MIN_MS = 320;    // below this it just flickers
+  const FONT_MS = 650;   // how long we will wait on the webfont
+  const MAX_MS = 1600;   // hard ceiling, whatever else is happening
+
+  const started = performance.now();
+  let done = false;
+
+  const after = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  function hide() {
+    if (done) return;
+    done = true;
+    const wait = Math.max(0, MIN_MS - (performance.now() - started));
+    setTimeout(() => {
+      window.__splashMs = Math.round(performance.now());
+      splash.classList.add("gone");
+      setTimeout(() => splash.remove(), 460);
+    }, wait);
+  }
+
+  const fonts = (document.fonts && document.fonts.ready) || Promise.resolve();
+  Promise.race([fonts, after(FONT_MS), after(MAX_MS)]).then(hide, hide);
+
+  setTimeout(hide, MAX_MS + 100);   // belt and braces
+})();
+
 /* Keep the status-bar colour in step when the system flips light/dark. */
 store.subscribe((_s, keys) => {
   if (keys === "*" || keys.includes("theme")) applyTheme();

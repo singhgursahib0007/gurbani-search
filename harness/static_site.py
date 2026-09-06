@@ -106,15 +106,17 @@ def build_static(out_dir: Path | None = None, include_text: bool = True,
 
     # The stylesheets and ES modules ship as they are - no bundling, so what
     # runs in production is the same source you edit.
-    for folder in ("css", "js", "fonts"):
+    for folder in ("css", "js", "fonts", "icons"):
         src = config.ROOT / "app" / folder
         dst = out / folder
         if dst.exists():
             shutil.rmtree(dst)
         shutil.copytree(src, dst, ignore=shutil.ignore_patterns("__pycache__"))
-    n_assets = sum(1 for f in ("css", "js", "fonts")
-                   for _ in (out / f).rglob("*"))
-    print(f"  css + js + fonts     {n_assets} files")
+    for single in ("icon.svg", "khanda.svg", "manifest.webmanifest"):
+        shutil.copy2(config.ROOT / "app" / single, out / single)
+    n_assets = sum(1 for f in ("css", "js", "fonts", "icons")
+                   for _ in (out / f).rglob("*")) + 3
+    print(f"  css + js + fonts + icons  {n_assets} files")
     # Tell GitHub Pages not to run Jekyll over 13,000 JSON files.
     (out / ".nojekyll").write_text("")
 

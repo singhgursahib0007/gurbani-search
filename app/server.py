@@ -309,6 +309,21 @@ class Handler(BaseHTTPRequestHandler):
                 return self._send(html, ctype="text/html")
 
             # The UI is split into CSS and ES modules, so serve those too.
+            if path in ("/icon.svg", "/khanda.svg", "/manifest.webmanifest"):
+                f = APP_DIR / path.lstrip("/")
+                kind = ("image/svg+xml" if path.endswith(".svg")
+                        else "application/manifest+json")
+                if f.is_file():
+                    return self._send(f.read_bytes(), ctype=kind)
+                return self._send({"error": "not found"}, 404)
+
+            if re.fullmatch(r"/icons/[\w.\-]+", path) and ".." not in path:
+                f = (APP_DIR / path.lstrip("/")).resolve()
+                if f.is_file() and APP_DIR in f.parents:
+                    kind = "image/x-icon" if f.suffix == ".ico" else "image/png"
+                    return self._send(f.read_bytes(), ctype=kind)
+                return self._send({"error": "not found"}, 404)
+
             if re.fullmatch(r"/(css|js|fonts)/[\w./-]+", path) and ".." not in path:
                 asset = (APP_DIR / path.lstrip("/")).resolve()
                 if asset.is_file() and APP_DIR in asset.parents:
